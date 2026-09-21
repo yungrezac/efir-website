@@ -1,0 +1,60 @@
+.hero h1 .hero-product-name {
+  display: block;
+  margin-bottom: 19px;
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: .6px;
+  font-weight: 500;
+  color: #b5bf9f;
+  white-space: normal;
+}
+.project-voice h4 { font-size: clamp(24px, 2.3vw, 31px); }
+.live-guide { border-top: 1px solid var(--line); padding-block: 77px 84px; }
+.guide-heading { display: flex; justify-content: space-between; gap: 40px; align-items: flex-end; }
+.guide-heading h2 { font-size: clamp(36px, 4vw, 56px); font-weight: 550; letter-spacing: -2px; line-height: 1.1; margin-top: 24px; }
+.guide-heading > p { font-size: 12px; line-height: 1.9; color: #989e8f; }
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 72px; margin-top: 45px; }
+.guide-answer { padding: 28px 0 33px; border-top: 1px solid var(--line); min-width: 0; }
+.guide-number { display: block; font-family: Consolas, monospace; font-size: 8px; letter-spacing: 1.4px; color: #b8ca91; }
+.guide-answer h3 { margin: 15px 0 13px; max-width: 490px; font-size: 21px; font-weight: 550; line-height: 1.35; letter-spacing: -.55px; }
+.guide-answer p { max-width: 490px; color: #a0a598; font-size: 13px; line-height: 1.9; }
+@media (max-width: 980px) {
+  .guide-grid { column-gap: 36px; }
+  .guide-answer h3 { font-size: 19px; }
+  .guide-answer p { font-size: 12px; }
+  .ecosystem-body { align-items: flex-start; }
+}
+@media (max-width: 760px) {
+  .hero h1 .hero-product-name { font-size: 10px; margin-bottom: 17px; }
+  .hero .eyebrow { font-size: 7px; letter-spacing: 1px; }
+  .project-voice h4 { font-size: 27px; }
+  .live-guide { padding-block: 48px; }
+  .guide-heading { flex-direction: column; align-items: flex-start; gap: 21px; }
+  .guide-heading h2 { font-size: 39px; margin-top: 19px; }
+  .guide-heading > p { font-size: 11px; }
+  .guide-grid { grid-template-columns: 1fr; margin-top: 30px; }
+  .guide-answer { padding-block: 25px 29px; }
+  .guide-answer h3 { font-size: 21px; }
+  .guide-answer p { font-size: 13px; }
+}
+@media (max-width: 400px) {
+  .hero h1 .hero-product-name { font-size: 9px; }
+  .hero .eyebrow { font-size: 6px; letter-spacing: .8px; }
+  .project-voice h4 { font-size: 24px; }
+  .project-bird h3 { font-size: 46px; }
+  .ecosystem-body h2 { font-size: 29px; }
+  .guide-heading h2 { font-size: 35px; }
+  .guide-answer h3 { font-size: 19px; }
+}
+.echo-mark { display: inline-block; flex-shrink: 0; vertical-align: middle; }
+.echo-mark-small { width: 20px; height: 20px; }
+.project-voice .title-with-badge { flex-wrap: wrap; }
+.project-voice h3 { display: flex; align-items: center; gap: 14px; font-size: clamp(42px, 5vw, 68px); letter-spacing: -2px; }
+.echo-mark-title { width: 56px; height: 56px; }
+.project-voice .scene-topline > span:first-child { display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 600px) {
+  .echo-mark-title { width: 38px; height: 38px; }
+  .project-voice h3 { gap: 10px; font-size: 42px; letter-spacing: -1.6px; }
+  .floating-voice .widget-heading { gap: 5px; }
+  .floating-voice .echo-mark-small { width: 16px; height: 16px; }
+}

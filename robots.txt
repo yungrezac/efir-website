@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /artifacts/
+Disallow: /scripts/
+Disallow: /downloads/
+Disallow: /README.md
+Disallow: /SEO.md
+Disallow: /package.json
+Disallow: /package-lock.json
+Disallow: /release.json
+Disallow: /*.exe$
+Disallow: /*.zip$
+
+Sitemap: https://efir-website-production.up.railway.app/sitemap.xml

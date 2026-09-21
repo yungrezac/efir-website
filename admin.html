@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c0f0b">
+  <meta name="robots" content="noindex, nofollow">
+  <title>EFIR — управление доступом</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="EFIR"><span class="brand-mark">E</span><span>EFIR</span><small>ADMIN</small></a>
+      <div class="session" id="session" hidden><span id="admin-email"></span><button class="ghost" id="sign-out">Выйти</button></div>
+    </header>
+
+    <section class="login card" id="login-view">
+      <div class="eyebrow">ЗАЩИЩЁННЫЙ РАЗДЕЛ</div>
+      <h1>Управление доступом</h1>
+      <p>Войдите с аккаунтом администратора EFIR.</p>
+      <form id="login-form">
+        <label>Почта<input id="email" type="email" autocomplete="username" required></label>
+        <label>Пароль<input id="password" type="password" autocomplete="current-password" required></label>
+        <button class="primary" type="submit">Войти</button>
+      </form>
+      <div class="message" id="login-message" role="status"></div>
+    </section>
+
+    <section id="admin-view" hidden>
+      <div class="hero">
+        <div><div class="eyebrow">EFIR CONTROL</div><h1>Пользователи и приложения</h1><p>Эксклюзив открывает скрытое приложение и разрешает запуск. Отдельный доступ разрешает запуск без подписки.</p></div>
+        <div class="stats"><div><strong id="users-count">0</strong><span>пользователей</span></div><div><strong id="apps-count">0</strong><span>приложений</span></div></div>
+      </div>
+      <div class="toolbar card">
+        <label class="search"><span>Поиск</span><input id="search" type="search" placeholder="Почта, имя или UUID"></label>
+        <button class="ghost" id="refresh">Обновить</button>
+      </div>
+      <div class="workspace">
+        <section class="card users-panel">
+          <div class="panel-title"><h2>Пользователи</h2><span id="result-count"></span></div>
+          <div class="users" id="users"></div>
+        </section>
+        <section class="card grants-panel" id="grants-panel">
+          <div class="empty" id="empty-state"><span>↖</span><strong>Выберите пользователя</strong><p>Справа появятся права на каждое приложение.</p></div>
+          <div id="user-access" hidden>
+            <div class="selected-user"><div class="avatar" id="selected-avatar"></div><div><h2 id="selected-name"></h2><p id="selected-email"></p><code id="selected-id"></code></div></div>
+            <div class="legend"><span><i class="dot exclusive"></i>Эксклюзив: видно и можно запускать</span><span><i class="dot access"></i>Без подписки: можно запускать</span></div>
+            <div class="apps" id="apps"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+  <script src="./assets/supabase-js.js"></script>
+  <script src="./admin.js"></script>
+</body>
+</html>
