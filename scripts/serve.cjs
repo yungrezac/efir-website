@@ -7,12 +7,14 @@ const path = require('node:path');
 
 const siteRoot = path.resolve(__dirname, '..');
 const protectService = require('./protect-service.cjs').createProtectService();
+const homepageEnabled = require('./homepage-status.cjs').createHomepageStatus();
+const maintenancePage = fs.readFileSync(path.join(siteRoot,'maintenance.html'));
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 const publicFiles = new Set([
   '/', '/index.html', '/styles.css', '/search-content.css', '/app.js',
   '/timer-preview.css', '/timer-preview.js', '/release.json', '/robots.txt', '/sitemap.xml',
-  '/admin', '/admin/', '/admin.html', '/admin.css', '/admin.js', '/analytics.js', '/analytics.css',
+  '/vladosikpypsik', '/vladosikpypsik/', '/admin.css', '/admin.js', '/analytics.js', '/analytics.css', '/site-settings.js',
   '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
   '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html'
@@ -52,6 +54,10 @@ const server = http.createServer(async (request, response) => {
 
   try {
     const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replaceAll('\\', '/');
+    if ((pathname==='/'||pathname==='/index.html') && !(await homepageEnabled())) {
+      response.writeHead(503,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Retry-After':'60','X-Robots-Tag':'noindex','Content-Length':maintenancePage.length});
+      response.end(request.method==='HEAD'?undefined:maintenancePage);return;
+    }
     if (pathname === '/api/protect') {
       try {
         const data = await protectService.lookup(new URL(request.url, 'http://localhost').searchParams.get('username'));
@@ -71,7 +77,7 @@ const server = http.createServer(async (request, response) => {
     if (!publicFiles.has(pathname) && !pathname.startsWith('/assets/') && !pathname.startsWith('/downloads/')) {
       return fail(404, 'Not found');
     }
-    const pageRoutes = { '/sinabon': '/sinabon.html', '/astral': '/astral.html', '/darisha': '/darisha.html', '/admin': '/admin.html', '/protect': '/protect.html' };
+    const pageRoutes = { '/sinabon': '/sinabon.html', '/astral': '/astral.html', '/darisha': '/darisha.html', '/vladosikpypsik': '/admin.html', '/protect': '/protect.html' };
     const resolvedPathname = pageRoutes[pathname.replace(/\/$/, '')] || pathname;
     let file = path.resolve(siteRoot, `.${resolvedPathname}`);
     const relative = path.relative(siteRoot, file);
