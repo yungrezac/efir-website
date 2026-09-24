@@ -8,6 +8,7 @@
   <title>EFIR — управление доступом</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./admin.css">
+  <link rel="stylesheet" href="/analytics.css">
 </head>
 <body>
   <main class="shell">
@@ -52,9 +53,11 @@
         </section>
       </div>
     </section>
+    <section id="analytics" class="card" hidden><div class="panel-title"><h2>Эфиры и использование</h2><a href="/protect">Проверка TIMER ↗</a></div><p>Данные собираются во время подключения к обновлённому лаунчеру. Алмазы — стоимость полученных подарков, не выплата TikTok.</p><form id="analytics-filter"><label>С<input type="date" id="analytics-from" required></label><label>По<input type="date" id="analytics-to" required></label><label>Пользователь<select id="analytics-user"><option value="">Все пользователи</option></select></label><button class="primary">Обновить статистику</button><button type="button" id="analytics-export" class="ghost">Скачать JSON</button></form><div id="analytics-status" role="status"></div><div id="analytics-summary" class="stats"></div><h3>Пользователи и приложения</h3><div class="analytics-table" id="analytics-usage"></div><h3>История эфиров</h3><div class="analytics-table" id="analytics-streams"></div></section>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </main>
   <script src="./assets/supabase-js.js"></script>
   <script src="./admin.js"></script>
+  <script src="/analytics.js"></script>
 </body>
 </html>

@@ -3,6 +3,7 @@
   const SUPABASE_URL = 'https://qpoyojxupblhjeqbvqfr.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_QxJKRVOdn07hduJkqcbciw_oUADNl-C';
   const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  window.efirAdminClient=client;
   const $ = id => document.getElementById(id);
   const state = { apps: [], users: [], selectedId: null, timer: 0 };
   const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
