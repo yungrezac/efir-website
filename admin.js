@@ -8,6 +8,30 @@
   const state = { apps: [], users: [], selectedId: null, timer: 0 };
   const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
   const initials = user => (user.name || user.email || '?').trim().slice(0, 1).toUpperCase();
+  let dashboardSequence = 0;
+  const pages = {
+    overview: ['Обзор', 'Основные показатели за выбранный период.'],
+    users: ['Пользователи', 'Управляйте эксклюзивами и доступом к приложениям без подписки.'],
+    streams: ['Эфиры', 'Зрители, подарки и активность стримеров.'],
+    usage: ['Использование', 'Кто, какие приложения и сколько времени использует.']
+  };
+  function navigate(focus = false) {
+    const key = location.hash.slice(1);
+    const page = Object.hasOwn(pages, key) ? key : 'overview';
+    document.querySelectorAll('[data-page]').forEach(link => {
+      if (link.dataset.page === page) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    $('page-title').textContent = pages[page][0];
+    $('page-description').textContent = pages[page][1];
+    $('users-page').hidden = page !== 'users';
+    $('analytics').hidden = page === 'users';
+    ['overview', 'streams', 'usage'].forEach(key => $(key + '-page').hidden = key !== page);
+    document.title = pages[page][0] + ' · EFIR ADMIN';
+    if (focus && !$('admin-view').hidden) $('page-title').focus({ preventScroll: true });
+  }
+  window.addEventListener('hashchange', () => navigate(true));
+  navigate();
 
   function toast(message, error = false) {
     const node = $('toast');
@@ -15,24 +39,38 @@
     clearTimeout(state.timer); state.timer = setTimeout(() => node.className = 'toast', 2800);
   }
   function showLogin(message = '') {
+    window.efirAdminReady = false;
+    dashboardSequence++;
+    state.users = []; state.apps = []; state.selectedId = null;
+    $('users').replaceChildren(); $('apps').replaceChildren();
+    window.dispatchEvent(new Event('efir-admin-closed'));
     $('login-view').hidden = false; $('admin-view').hidden = true; $('session').hidden = true;
     $('login-message').textContent = message;
   }
   async function showAdmin(session) {
+    const { data, error } = await client.rpc('is_efir_admin');
+    if (error || !data) { showLogin(error ? 'Не удалось проверить доступ. Попробуйте войти снова.' : 'У этого аккаунта нет прав администратора.'); return; }
     $('login-view').hidden = true; $('admin-view').hidden = false; $('session').hidden = false;
     $('session').style.display = 'flex'; $('admin-email').textContent = session.user.email || '';
+    navigate();
+    window.efirAdminReady = true;
+    window.dispatchEvent(new Event('efir-admin-ready'));
     await loadDashboard();
   }
   async function loadDashboard(search = $('search').value.trim()) {
+    const sequence = ++dashboardSequence;
+    $('result-count').textContent = 'Загрузка…';
     const { data, error } = await client.rpc('admin_dashboard', { p_search: search });
+    if (sequence !== dashboardSequence) return;
     if (error) {
       if (/ADMIN_REQUIRED|permission/i.test(error.message)) { await client.auth.signOut(); showLogin('У этого аккаунта нет прав администратора.'); return; }
+      $('result-count').textContent = 'Не удалось загрузить';
       toast(`Не удалось загрузить данные: ${error.message}`, true); return;
     }
     state.apps = Array.isArray(data.apps) ? data.apps : [];
     state.users = Array.isArray(data.users) ? data.users : [];
     $('users-count').textContent = state.users.length; $('apps-count').textContent = state.apps.length;
-    $('result-count').textContent = `${state.users.length} найдено`;
+    $('result-count').textContent = `Найдено: ${state.users.length}`;
     renderUsers();
     if (state.selectedId && state.users.some(user => user.id === state.selectedId)) renderAccess();
     else { state.selectedId = null; $('empty-state').hidden = false; $('user-access').hidden = true; }
@@ -61,8 +99,8 @@
     const params = { p_user_id: state.selectedId, p_app_id: input.dataset.app, p_kind: input.dataset.kind, p_enabled: input.checked };
     const { error } = await client.rpc('admin_set_app_grant', params);
     if (error) { input.checked = !input.checked; input.disabled = false; toast(`Не удалось сохранить: ${error.message}`, true); return; }
-    const user = state.users.find(item => item.id === state.selectedId); const key = input.dataset.kind === 'exclusive' ? 'exclusive_apps' : 'access_apps';
-    user[key] = input.checked ? [...new Set([...(user[key] || []), input.dataset.app])] : (user[key] || []).filter(id => id !== input.dataset.app);
+    const user = state.users.find(item => item.id === params.p_user_id); const key = params.p_kind === 'exclusive' ? 'exclusive_apps' : 'access_apps';
+    if (user) user[key] = params.p_enabled ? [...new Set([...(user[key] || []), params.p_app_id])] : (user[key] || []).filter(id => id !== params.p_app_id);
     input.disabled = false; renderUsers(); toast(input.checked ? 'Доступ выдан' : 'Доступ отозван');
   }
 
@@ -76,4 +114,5 @@
   $('refresh').addEventListener('click', () => loadDashboard());
   let debounce; $('search').addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(() => loadDashboard(), 300); });
   client.auth.getSession().then(({ data }) => data.session ? showAdmin(data.session) : showLogin());
+  client.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') showLogin(); });
 })();
