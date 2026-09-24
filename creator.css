@@ -9,3 +9,16 @@ dialog{position:fixed;inset:0;width:min(440px,calc(100% - 32px));max-height:calc
 @media(min-width:900px){.creator-page{margin-top:24px}.portrait-stage{aspect-ratio:1/1.075}}
 @media(max-width:480px){.creator-page{padding:0 18px}.portrait-stage{margin:0 -18px;aspect-ratio:1/1.075}.identity{left:6%;top:19%}.brand{gap:7px}.brand img{width:28px;height:28px}.brand strong{font-size:18px}.brand small{font-size:8px;letter-spacing:1.4px}.name-block{margin-top:23px}.name-block .eyebrow{font-size:8px;letter-spacing:1.4px}.name-block h1{letter-spacing:-1.5px;margin-top:8px}.links-panel{padding:19px;border-radius:23px}.panel-heading .eyebrow{font-size:9px;letter-spacing:1.5px}.link-card{padding:14px 12px;gap:12px}.link-copy strong{font-size:15px}.link-icon{width:37px;height:37px;flex-basis:37px}.coming{font-size:9px;padding:4px 7px}.rules-button{padding:16px 13px}.name-line{width:24px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.creator-astral .portrait-stage{aspect-ratio:1/.88}
+.creator-astral .portrait-wrap{bottom:-56%;mask-image:linear-gradient(#000 65%,transparent 92%)}
+.creator-astral .portrait-wrap::after{mask-image:url(/assets/creators/astral.png)}
+.creator-astral .identity{left:auto;right:5%;top:16%;width:32%}
+.creator-astral .name-block h1{font-size:clamp(27px,6.7vw,49px);letter-spacing:-2px}
+.creator-astral .name-block{margin-top:28px}
+.creator-astral .link-card{min-height:78px;transition:background .2s,border-color .2s,transform .2s}
+.creator-astral .link-card:hover{background:#d5fc6b0d;border-color:#d5fc6b55;transform:translateY(-2px)}
+.creator-astral .link-icon{color:#d5fc6b;background:linear-gradient(135deg,#d5fc6b19,#d5fc6b05);border:1px solid #d5fc6b18}
+.creator-astral .link-icon svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.creator-astral .link-copy{min-width:0}.creator-astral .link-copy strong{font-size:14px;line-height:1.4;letter-spacing:.1px}.creator-astral .link-copy small{font-size:9px;letter-spacing:.5px;line-height:1.5}
+.link-arrow{margin-left:auto;color:#a7bb95;font-size:23px;flex-shrink:0}
+@media(max-width:480px){.creator-astral .identity{right:4%;width:33%;top:15%}.creator-astral .name-block{margin-top:19px}.creator-astral .name-block h1{letter-spacing:-1.4px}.creator-astral .link-card{min-height:71px;gap:10px}.creator-astral .link-copy strong{font-size:12px}.creator-astral .link-copy small{font-size:8px;letter-spacing:.2px}.creator-astral .link-arrow{font-size:20px}}
