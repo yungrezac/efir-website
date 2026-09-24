@@ -56,7 +56,7 @@ function createProtectService({fetchImpl=fetch,checkLive=tikTokLive,now=Date.now
       const old=oldResult.status==='fulfilled'?oldResult.value:null;
       const live=liveResult.status==='fulfilled'&&typeof liveResult.value==='boolean' ? (liveResult.value?'live':'offline') : current?.launcher_live?'live':'unknown';
       const license=current?.license==='current' || current?.status==='original'?'current':old?.get(username)===true?'legacy':current?.license==='expired'?'expired':old?.has(username)?'legacy_expired':current&&old?'none':'unknown';
-      const result={username,live,license,legacy_licensed:old?.get(username)===true,timer_running:live==='live'&&current?.timer_running===true,checked_at:new Date(now()).toISOString()};
+      const result={username,live,license,license_check_complete:!!(current&&old),legacy_licensed:old?.get(username)===true,timer_running:live==='live'&&current?.timer_running===true,checked_at:new Date(now()).toISOString()};
       cache.set(username,{at:now(),value:result});if(cache.size>1000)cache.delete(cache.keys().next().value);
       return result;
     })().finally(()=>pending.delete(username));
