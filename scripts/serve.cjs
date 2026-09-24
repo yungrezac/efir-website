@@ -15,7 +15,7 @@ const publicFiles = new Set([
   '/admin', '/admin/', '/admin.html', '/admin.css', '/admin.js', '/analytics.js', '/analytics.css',
   '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
-  '/astral', '/astral/', '/astral.html'
+  '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html'
 ]);
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -71,7 +71,7 @@ const server = http.createServer(async (request, response) => {
     if (!publicFiles.has(pathname) && !pathname.startsWith('/assets/') && !pathname.startsWith('/downloads/')) {
       return fail(404, 'Not found');
     }
-    const pageRoutes = { '/sinabon': '/sinabon.html', '/astral': '/astral.html', '/admin': '/admin.html', '/protect': '/protect.html' };
+    const pageRoutes = { '/sinabon': '/sinabon.html', '/astral': '/astral.html', '/darisha': '/darisha.html', '/admin': '/admin.html', '/protect': '/protect.html' };
     const resolvedPathname = pageRoutes[pathname.replace(/\/$/, '')] || pathname;
     let file = path.resolve(siteRoot, `.${resolvedPathname}`);
     const relative = path.relative(siteRoot, file);

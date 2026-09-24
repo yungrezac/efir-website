@@ -22,3 +22,26 @@ dialog{position:fixed;inset:0;width:min(440px,calc(100% - 32px));max-height:calc
 .creator-astral .link-copy{min-width:0}.creator-astral .link-copy strong{font-size:14px;line-height:1.4;letter-spacing:.1px}.creator-astral .link-copy small{font-size:9px;letter-spacing:.5px;line-height:1.5}
 .link-arrow{margin-left:auto;color:#a7bb95;font-size:23px;flex-shrink:0}
 @media(max-width:480px){.creator-astral .identity{right:4%;width:33%;top:15%}.creator-astral .name-block{margin-top:19px}.creator-astral .name-block h1{letter-spacing:-1.4px}.creator-astral .link-card{min-height:71px;gap:10px}.creator-astral .link-copy strong{font-size:12px}.creator-astral .link-copy small{font-size:8px;letter-spacing:.2px}.creator-astral .link-arrow{font-size:20px}}
+.creator-darisha .portrait-stage{aspect-ratio:1/.89}
+.creator-darisha .portrait-wrap{bottom:-54%;mask-image:linear-gradient(#000 68%,transparent 95%)}
+.creator-darisha .portrait-wrap::after{mask-image:url(/assets/creators/darisha.png)}
+.creator-darisha .identity{left:4%;top:22%;width:29%}
+.creator-darisha .name-block{margin:0}
+.creator-darisha .name-block h1{font-size:clamp(22px,5.7vw,39px);letter-spacing:-2px}
+.portrait-brand{position:absolute;right:4%;top:23%;z-index:2}
+.creator-darisha .link-card{transition:background .2s,border-color .2s,transform .2s}
+.creator-darisha .link-card:hover{background:#d5fc6b0d;border-color:#d5fc6b55;transform:translateY(-2px)}
+.creator-darisha .link-icon{color:#d5fc6b;background:linear-gradient(135deg,#d5fc6b19,#d5fc6b05);border:1px solid #d5fc6b18}
+.creator-darisha .link-icon svg,.copy-button svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.bank-card{padding:18px;border:1px solid #d5fc6b23;border-radius:16px;background:linear-gradient(135deg,#d5fc6b09,#ffffff02)}
+.bank-card label{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:#e3eed9}
+.bank-symbol{width:23px;height:23px;border-radius:7px;display:grid;place-items:center;background:#d5fc6b14;color:var(--lime);font-size:14px}
+.bank-caption{margin-left:auto;font-weight:400;font-size:10px;color:#94a288}
+.copy-row{display:flex;align-items:center;gap:12px;margin-top:13px}
+.copy-row input{min-width:0;width:100%;padding:10px 0;border:0;outline-offset:3px;border-radius:3px;color:#edf7e4;background:transparent;font-family:Inter,"Segoe UI",sans-serif;font-size:20px;font-weight:500;letter-spacing:1.1px;font-variant-numeric:tabular-nums;cursor:text}
+.copy-row input:focus-visible{outline:1px solid #d5fc6b66}
+.copy-button{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid #d5fc6b35;border-radius:12px;color:var(--lime);background:#d5fc6b0b;cursor:pointer;transition:background .2s}
+.copy-button:hover{background:#d5fc6b22}.copy-button svg{width:21px;height:21px}
+.copy-status{min-height:18px;margin:18px 0 0;text-align:center;font-size:11px;line-height:1.6;color:#a8bb96}
+@media(max-width:480px){.creator-darisha .identity{top:23%;left:4%;width:30%}.creator-darisha .name-block h1{letter-spacing:-1.3px}.portrait-brand{right:4%;top:24%}.creator-darisha .bank-card{padding:14px 12px}.copy-row{gap:7px}.copy-row input{font-size:16px;letter-spacing:.25px}.copy-button{flex-basis:37px;width:37px;height:39px}.bank-caption{font-size:9px}.copy-status{font-size:10px}.creator-darisha .link-copy strong{font-size:14px}}
+@media(max-width:350px){.copy-row input{font-size:14px;letter-spacing:0}.creator-darisha .name-block h1{font-size:20px}.creator-darisha .portrait-brand{gap:5px}.creator-darisha .portrait-brand img{width:24px;height:24px}.creator-darisha .portrait-brand strong{font-size:16px}.creator-darisha .portrait-brand small{font-size:7px}}
