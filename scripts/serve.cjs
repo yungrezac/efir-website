@@ -13,7 +13,8 @@ const publicFiles = new Set([
   '/', '/index.html', '/styles.css', '/search-content.css', '/app.js',
   '/timer-preview.css', '/timer-preview.js', '/release.json', '/robots.txt', '/sitemap.xml',
   '/admin', '/admin/', '/admin.html', '/admin.css', '/admin.js', '/analytics.js', '/analytics.css',
-  '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js'
+  '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
+  '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js'
 ]);
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -69,7 +70,7 @@ const server = http.createServer(async (request, response) => {
     if (!publicFiles.has(pathname) && !pathname.startsWith('/assets/') && !pathname.startsWith('/downloads/')) {
       return fail(404, 'Not found');
     }
-    const resolvedPathname = pathname === '/admin' || pathname === '/admin/' ? '/admin.html' : pathname === '/protect' || pathname === '/protect/' ? '/protect.html' : pathname;
+    const resolvedPathname = pathname === '/sinabon' || pathname === '/sinabon/' ? '/sinabon.html' : pathname === '/admin' || pathname === '/admin/' ? '/admin.html' : pathname === '/protect' || pathname === '/protect/' ? '/protect.html' : pathname;
     let file = path.resolve(siteRoot, `.${resolvedPathname}`);
     const relative = path.relative(siteRoot, file);
     if (relative.startsWith('..') || path.isAbsolute(relative)) return fail(403, 'Forbidden');
