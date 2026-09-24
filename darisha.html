@@ -8,8 +8,8 @@
   <title>DARISHA · EFIR launcher</title>
   <link rel="canonical" href="https://efirlive.pro/darisha">
   <link rel="icon" href="/assets/favicon.svg">
-  <link rel="stylesheet" href="/creator.css?v=3">
-  <script src="/creator.js?v=3" defer></script>
+  <link rel="stylesheet" href="/creator.css?v=4">
+  <script src="/creator.js?v=4" defer></script>
 </head>
 <body class="creator-darisha">
   <main class="creator-page">
@@ -31,8 +31,15 @@
         <div class="bank-card"><label for="kaspi-number"><span class="bank-symbol" aria-hidden="true">K</span>Kaspi<span class="bank-caption">Номер карты</span></label><div class="copy-row"><input id="kaspi-number" type="text" inputmode="numeric" value="4400 4302 8152 6464" readonly aria-describedby="copy-status"><button class="copy-button" data-copy="kaspi-number" data-bank="Kaspi" aria-label="Скопировать номер Kaspi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="3"/><path d="M16 8V6a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h2"/></svg></button></div></div>
       </div>
       <p class="copy-status" id="copy-status" role="status" aria-live="polite">Нажмите на значок, чтобы скопировать номер</p>
+      <button class="rules-button" id="open-rules" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8M12 3v3m6-1 2 2M12 10v4l2 1"/><circle cx="12" cy="14" r="7"/></svg><span>Правила таймера</span><span class="arrow" aria-hidden="true">↗</span></button>
     </section>
     <footer><a href="/">СОЗДАНО С <strong>EFIR</strong><span aria-hidden="true">↗</span></a></footer>
   </main>
+  <dialog id="rules-dialog" aria-labelledby="rules-title" aria-describedby="rules-description">
+    <div class="dialog-top"><span class="eyebrow">DARISHA / TIMER</span><button id="close-rules" class="close-button" aria-label="Закрыть правила" autofocus>×</button></div>
+    <h2 id="rules-title">Правила таймера</h2>
+    <p id="rules-description">Правила скоро появятся.</p>
+    <button class="dialog-done" id="rules-done">Понятно</button>
+  </dialog>
 </body>
 </html>

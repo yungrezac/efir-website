@@ -45,3 +45,8 @@ dialog{position:fixed;inset:0;width:min(440px,calc(100% - 32px));max-height:calc
 .copy-status{min-height:18px;margin:18px 0 0;text-align:center;font-size:11px;line-height:1.6;color:#a8bb96}
 @media(max-width:480px){.creator-darisha .identity{top:23%;left:4%;width:30%}.creator-darisha .name-block h1{letter-spacing:-1.3px}.portrait-brand{right:4%;top:24%}.creator-darisha .bank-card{padding:14px 12px}.copy-row{gap:7px}.copy-row input{font-size:16px;letter-spacing:.25px}.copy-button{flex-basis:37px;width:37px;height:39px}.bank-caption{font-size:9px}.copy-status{font-size:10px}.creator-darisha .link-copy strong{font-size:14px}}
 @media(max-width:350px){.copy-row input{font-size:14px;letter-spacing:0}.creator-darisha .name-block h1{font-size:20px}.creator-darisha .portrait-brand{gap:5px}.creator-darisha .portrait-brand img{width:24px;height:24px}.creator-darisha .portrait-brand strong{font-size:16px}.creator-darisha .portrait-brand small{font-size:7px}}
+.creator-sinabon .link-card{transition:background .2s,border-color .2s,transform .2s}
+.creator-sinabon .link-card:hover{background:#d5fc6b0d;border-color:#d5fc6b55;transform:translateY(-2px)}
+.creator-sinabon .link-icon{color:#d5fc6b;background:linear-gradient(135deg,#d5fc6b19,#d5fc6b05);border:1px solid #d5fc6b18}
+.creator-sinabon .link-icon svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:480px){.creator-sinabon .bank-card{padding:14px 12px}.creator-sinabon .link-copy strong{font-size:14px}}
