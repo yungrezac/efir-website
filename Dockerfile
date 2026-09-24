@@ -3,6 +3,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 COPY . .
+RUN npm ci --omit=dev
 RUN node scripts/check-seo.cjs && node scripts/check-download.cjs
 USER node
 EXPOSE 8080

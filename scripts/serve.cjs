@@ -6,6 +6,7 @@ const http = require('node:http');
 const path = require('node:path');
 
 const siteRoot = path.resolve(__dirname, '..');
+const protectService = require('./protect-service.cjs').createProtectService();
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 const publicFiles = new Set([
@@ -49,6 +50,14 @@ const server = http.createServer(async (request, response) => {
 
   try {
     const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replaceAll('\\', '/');
+    if (pathname === '/api/protect') {
+      try {
+        const data = await protectService.lookup(new URL(request.url, 'http://localhost').searchParams.get('username'));
+        response.writeHead(200, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+        response.end(request.method === 'HEAD' ? undefined : JSON.stringify(data));
+      } catch (error) { fail(error.status || 503, error.status === 400 ? 'Invalid username' : 'Verification temporarily unavailable'); }
+      return;
+    }
     if (pathname === '/downloads/EFIR-Launcher-Setup.exe') {
       response.writeHead(302, { Location: 'https://github.com/yungrezac/efirlauncher/releases/latest/download/EFIR-Launcher-Setup.exe', 'Cache-Control': 'no-cache' });
       response.end();
