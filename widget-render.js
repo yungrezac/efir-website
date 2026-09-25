@@ -54,10 +54,49 @@
   }
   return {version:3,kind:'widget',elements:els};
  }
+ const boundsCache=new Map();
+ if(root.document?.fonts)root.document.fonts.addEventListener('loadingdone',()=>boundsCache.clear());
+ function horizontalBounds(doc={}){
+  if(!Array.isArray(doc.elements))return {x:0,width:800};
+  const key=JSON.stringify(doc);if(boundsCache.has(key))return boundsCache.get(key);
+  const elements=doc.elements.slice(0,40).map(element).filter(e=>!e.hidden&&(e.type==='text'?e.text.trim():safeImage(e.gift?.icon||e.src)));
+  let holder,left=800,right=0;
+  try{
+   if(root.document?.body){
+    holder=root.document.createElement('div');holder.style.cssText='position:fixed;left:-10000px;top:0;width:800px;height:600px;visibility:hidden;pointer-events:none';
+    holder.innerHTML=renderDocument(doc,'measure');holder.firstElementChild.setAttribute('width','800');holder.firstElementChild.setAttribute('height','600');root.document.body.append(holder);
+   }
+   for(const e of elements){
+    let box={x:-e.w/2,y:-e.h/2,width:e.w,height:e.h};
+    const node=holder&&Array.from(holder.querySelectorAll('[data-layer]')).find(n=>n.getAttribute('data-layer')===e.id);
+    if(node){const measured=node.getBBox();if(measured.width>0&&measured.height>0)box=measured;}
+    // getBBox excludes strokes and filters. Keep their painted edges in the crop.
+    let pad=0,offset=0;
+    if(e.outline!=='none'&&e.width>0){
+     const multiple=e.outline==='triple'?3:['sticker','double','comic'].includes(e.outline)?2:1;
+     pad=e.width*multiple*(e.type==='text'?.5:1)+2;
+     if(e.outline==='neon')pad+=24;
+     if(['offset','extrude','comic'].includes(e.outline))offset=12;
+    }
+    const angle=e.rotation*Math.PI/180,c=Math.cos(angle),s=Math.sin(angle);
+    for(const x of [box.x-pad,box.x+box.width+pad+offset])for(const y of [box.y-pad,box.y+box.height+pad+offset]){
+     const px=e.x+x*c-y*s;left=Math.min(left,px);right=Math.max(right,px);
+    }
+   }
+  }finally{holder?.remove()}
+  // Respect the original scene's clipping; never change the source widget itself.
+  left=Math.max(0,Math.floor(left));right=Math.min(800,Math.ceil(right));
+  const bounds=right>left?{x:left,width:right-left}:{x:0,width:800};
+  if(boundsCache.size>=100)boundsCache.clear();boundsCache.set(key,bounds);return bounds;
+ }
  function tickerLayout(doc={}) {
-  const count=Math.round(clamp(doc.visibleCount,1,20,4)),gap=clamp(doc.gap,0,200,30),sources=Math.min(10,Array.isArray(doc.items)?doc.items.length:0);
-  const stride=800+gap,slots=sources?Math.ceil(count/sources)*sources:0;
-  return {count,gap,stride,slots,width:count*stride-gap,height:600,distance:slots*stride,seconds:clamp(doc.duration,2,120,8)*slots};
+  const count=Math.round(clamp(doc.visibleCount,1,20,4)),gap=clamp(doc.gap,0,200,30),items=(Array.isArray(doc.items)?doc.items:[]).slice(0,10),sources=items.length;
+  const crops=items.map(item=>horizontalBounds(item.document||{})),slots=sources?Math.ceil(count/sources)*sources:0;
+  const pitches=crops.map(c=>c.width+gap),period=pitches.reduce((sum,w)=>sum+w,0),distance=sources?period*slots/sources:0;
+  let width=count*(800+gap)-gap;
+  if(sources)width=Math.max(...pitches.map((_,start)=>Array.from({length:count},(_,i)=>pitches[(start+i)%sources]).reduce((sum,w)=>sum+w,0)-gap));
+  let x=0;const positions=Array.from({length:slots*2},(_,i)=>{const at=x;x+=pitches[i%sources];return at});
+  return {count,gap,crops,positions,slots,width,height:600,distance,seconds:clamp(doc.duration,2,120,8)*slots};
  }
  function dimensions(doc={}) {return doc.kind==='ticker'?tickerLayout(doc):{width:800,height:600};}
  function renderDocument(doc={},prefix='scene',depth=0){
@@ -69,8 +108,8 @@
    else if(items.length){
     const layout=tickerLayout(doc);
     // Define expensive artwork once. Two identical periods cover the viewport at every phase.
-    const symbols=frames.map((frame,i)=>`<g id="${prefix}-source-${i}">${frame.replace('<svg ','<svg width="800" height="600" ')}</g>`).join('');
-    const strip=Array.from({length:layout.slots*2},(_,i)=>`<use href="#${prefix}-source-${i%items.length}" transform="translate(${i*layout.stride} 0)"/>`).join('');
+    const symbols=frames.map((frame,i)=>{const crop=layout.crops[i];return `<g id="${prefix}-source-${i}">${frame.replace('viewBox="0 0 800 600"',`viewBox="${crop.x} 0 ${crop.width} 600"`).replace('<svg ',`<svg width="${crop.width}" height="600" `)}</g>`}).join('');
+    const strip=layout.positions.map((x,i)=>`<use href="#${prefix}-source-${i%items.length}" transform="translate(${x} 0)"/>`).join('');
     body=`<defs>${symbols}</defs><style>@keyframes ${prefix}-ticker{from{transform:translateX(0)}to{transform:translateX(-${layout.distance}px)}}</style><g data-ticker-track="true" style="animation:${prefix}-ticker ${layout.seconds}s linear infinite;will-change:transform">${strip}</g>`;
    }
    const size=dimensions(doc);
