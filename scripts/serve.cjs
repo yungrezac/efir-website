@@ -35,6 +35,7 @@ const mime = {
   '.webp': 'image/webp',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
   '.woff': 'font/woff',
   '.mp3': 'audio/mpeg',
   '.wav': 'audio/wav',

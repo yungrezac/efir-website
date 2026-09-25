@@ -1,16 +1,33 @@
 (function(root){
- const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[char]));
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
  const themes={gold:['#fff83d','#ffad00','#bd5300'],pink:['#ffd5f6','#f760b7','#96339c'],ice:['#d7fbff','#42baff','#3056b5'],lime:['#f0ff80','#a8e52d','#397b22']};
- const clamp=(x,min,max,fallback)=>Number.isFinite(Number(x))?Math.max(min,Math.min(max,Number(x))):fallback;
+ const fonts=['Arial Black','Ruslan Display','Rubik Mono One','Rubik Glitch','Rubik Wet Paint','Rubik Beastly','Rubik Burned','Rubik Dirt','Rubik Moonrocks','Rubik Scribble','Rubik Spray Paint','Rubik Vinyl','Rubik Bubbles','Caveat','Lobster','Comfortaa','Oswald'];
+ const outlines={sticker:'Классический стикер',single:'Один контур',double:'Двойной контур',triple:'Тройной контур',neon:'Неоновое свечение',extrude:'Объёмная тень',comic:'Комикс',dashed:'Пунктир',offset:'Смещённый контур',none:'Без обводки'};
+ const layerIds=['decor','gift','heading','text','caption'];
+ const clamp=(x,min,max,fallback)=>x!==null&&x!==''&&Number.isFinite(Number(x))?Math.max(min,Math.min(max,Number(x))):fallback;
+ const color=(x,fallback)=>/^#[0-9a-f]{6}$/i.test(x||'')?x:fallback;
+ function layer(v={}){return {x:clamp(v.x,-800,800,0),y:clamp(v.y,-600,600,0),scale:clamp(v.scale,.2,3,1),rotation:clamp(v.rotation,-180,180,0),curve:clamp(v.curve,-180,180,0),font:fonts.includes(v.font)?v.font:fonts[0],outline:outlines[v.outline]?v.outline:'sticker',width:clamp(v.width,0,40,12),outer:color(v.outer,'#fffdf2'),inner:color(v.inner,'#173421')};}
+ function order(v){return [...new Set([...(Array.isArray(v)?v:[]),...layerIds])].filter(id=>layerIds.includes(id));}
  function render(doc={}){
-  const palette=themes[doc.theme]||themes.gold;
-  const size=clamp(doc.fontSize,40,150,96),giftSize=clamp(doc.giftSize,80,360,240);
-  const image=doc.template==='gift'&&/^https:\/\//.test(doc.gift?.icon||'');
-  const text=(value,y,font)=>{value=String(value||'').slice(0,100);const fitted=Math.min(font,650/Math.max(1,Array.from(value).length*.66));return `<text x="400" y="${y}" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="${fitted}" paint-order="stroke fill" stroke-linejoin="round" stroke="#fffdf2" stroke-width="24">${esc(value)}</text><text x="400" y="${y}" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="${fitted}" paint-order="stroke fill" stroke-linejoin="round" stroke="#173421" stroke-width="12" fill="url(#ink)">${esc(value)}</text>`};
-  const y=image?430:260;
-  let decor='';
-  if(doc.decor!==false) for(const [x,y,r] of [[95,190,-15],[702,160,18],[112,455,12],[690,450,-10]])decor+=`<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 -22 L7 -7 23 -5 11 7 15 23 0 15 -15 23 -11 7 -23 -5 -7 -7Z" fill="url(#ink)" stroke="#fff" stroke-width="12" paint-order="stroke fill"/><path d="M-28 -24 Q-42 -14 -40 -2 M27 30 Q40 19 39 10" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/></g>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="${esc(doc.text)}"><defs><linearGradient id="ink" x2="0" y2="1"><stop stop-color="${palette[0]}"/><stop offset=".65" stop-color="${palette[1]}"/><stop offset="1" stop-color="${palette[2]}"/></linearGradient><filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="8" stdDeviation="3" flood-opacity=".25"/></filter></defs><g filter="url(#shadow)">${doc.animate?'<animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="3s" repeatCount="indefinite"/>':''}${decor}${image?`<image href="${esc(doc.gift.icon)}" x="${400-giftSize/2}" y="${330-giftSize}" width="${giftSize}" height="${giftSize}"/>`:''}${text(doc.heading,image?55:y-98,48)}${text(doc.text,y,size)}${text(doc.caption,y+90,48)}</g></svg>`;
+ const palette=themes[doc.theme]||themes.gold,size=clamp(doc.fontSize,40,150,96),giftSize=clamp(doc.giftSize,80,360,240),image=doc.template==='gift'&&/^https:\/\//.test(doc.gift?.icon||'');let paths='';
+ function text(id,value,y,font){value=String(value||'').slice(0,100);if(!value)return '';const s=layer(doc.layers?.[id]),fitted=Math.min(font,650/Math.max(1,Array.from(value).length*.66));let content=esc(value),position=`x="400" y="${y}"`;
+ if(s.curve){paths+=`<path id="curve-${id}" d="M 65 ${y} Q 400 ${y-s.curve*2} 735 ${y}"/>`;content=`<textPath href="#curve-${id}" startOffset="50%">${content}</textPath>`;position='';}
+ const glyph=(stroke,width,fill='url(#ink)',extra='')=>`<text ${position} text-anchor="middle" font-family="${esc(s.font)},Arial,sans-serif" font-weight="${s.font==='Arial Black'?900:400}" font-size="${fitted}" paint-order="stroke fill" stroke-linejoin="round" stroke="${stroke}" stroke-width="${width}" fill="${fill}" ${extra}>${content}</text>`;
+ const w=s.width;let result='';
+ if(s.outline==='sticker'||s.outline==='double')result=glyph(s.outer,w*2)+glyph(s.inner,w);
+ if(s.outline==='single')result=glyph(s.outer,w);
+ if(s.outline==='triple')result=glyph(s.inner,w*3)+glyph(s.outer,w*2)+glyph(palette[2],w);
+ if(s.outline==='neon')result=glyph(s.outer,w,'none','filter="url(#glow)"')+glyph(s.outer,w*.3);
+ if(s.outline==='extrude'){for(let n=10;n>0;n-=2)result+=glyph(s.inner,w,s.inner,`transform="translate(${n} ${n})"`);result+=glyph(s.outer,w*.5);}
+ if(s.outline==='comic')result=glyph(s.inner,w*2,'url(#ink)','transform="translate(6 8)"')+glyph(s.outer,w*1.5)+glyph(s.inner,w*.5);
+ if(s.outline==='dashed')result=glyph(s.outer,w,'none','stroke-dasharray="12 8"')+glyph('none',0);
+ if(s.outline==='offset')result=glyph(s.outer,w,'none','transform="translate(8 -8)"')+glyph(s.inner,w*.5);
+ if(s.outline==='none')result=glyph('none',0);return result;}
+ const y=image?430:260;let decor='';
+ if(doc.decor!==false)for(const [x,y,r] of [[95,190,-15],[702,160,18],[112,455,12],[690,450,-10]])decor+=`<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 -22 L7 -7 23 -5 11 7 15 23 0 15 -15 23 -11 7 -23 -5 -7 -7Z" fill="url(#ink)" stroke="#fff" stroke-width="12" paint-order="stroke fill"/></g>`;
+ const parts={decor,gift:image?`<image href="${esc(doc.gift.icon)}" x="${400-giftSize/2}" y="${330-giftSize}" width="${giftSize}" height="${giftSize}"/>`:'',heading:text('heading',doc.heading,image?55:y-98,48),text:text('text',doc.text,y,size),caption:text('caption',doc.caption,y+90,48)};
+ const body=order(doc.layerOrder).map(id=>{const s=layer(doc.layers?.[id]);return `<g data-layer="${id}" transform="translate(${s.x} ${s.y}) translate(400 300) rotate(${s.rotation}) scale(${s.scale}) translate(-400 -300)">${parts[id]}</g>`}).join('');
+ return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="${esc(doc.text)}"><defs><linearGradient id="ink" x2="0" y2="1"><stop stop-color="${palette[0]}"/><stop offset=".65" stop-color="${palette[1]}"/><stop offset="1" stop-color="${palette[2]}"/></linearGradient><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="8" stdDeviation="3" flood-opacity=".25"/></filter><filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>${paths}</defs><g filter="url(#shadow)">${doc.animate?'<animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="3s" repeatCount="indefinite"/>':''}${body}</g></svg>`;
  }
- root.IMMWIGET={render};if(typeof module!=='undefined')module.exports={render};
+ const api={render,fonts,outlines,layer,order,layerIds};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
