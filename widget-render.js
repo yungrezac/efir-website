@@ -41,6 +41,50 @@
  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="${esc(doc.text)}"><defs><linearGradient id="ink" x2="0" y2="1"><stop stop-color="${palette[0]}"/><stop offset=".65" stop-color="${palette[1]}"/><stop offset="1" stop-color="${palette[2]}"/></linearGradient><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="8" stdDeviation="3" flood-opacity=".25"/></filter><filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>${paths}</defs><g filter="url(#shadow)">${doc.animate?'<animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="3s" repeatCount="indefinite"/>':''}${body}</g></svg>`;
  }
  const legacyRender=render;
+ const frameCache=new Map(),frameJobs=new Map(),assetCache=new Map();
+ async function embeddedAsset(url){
+  if(url.startsWith('data:'))return url;
+  if(assetCache.has(url))return assetCache.get(url);
+  const job=(async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(12000)});if(!response.ok)throw Error('Asset '+response.status);const blob=await response.blob();return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob)});})();
+  if(assetCache.size>=50)assetCache.clear();assetCache.set(url,job);
+  try{return await job}catch(error){assetCache.delete(url);throw error}
+ }
+ async function prepareFrame(doc){
+  if(doc.animate)return false;
+  const key=JSON.stringify(doc);if(frameCache.has(key))return true;if(frameJobs.has(key))return frameJobs.get(key);
+  const job=(async()=>{
+   const used=[...new Set(scene(doc).elements.filter(e=>e.type==='text').map(e=>e.font||'Arial Black'))];
+   await Promise.all(used.map(font=>root.document.fonts.load(`80px "${font}"`)));
+   let fontCSS='';const stylesheet=root.document.querySelector('link[href$="fonts.css"]');
+   if(stylesheet&&used.some(font=>font!=='Arial Black')){
+    const response=await fetch(stylesheet.href);if(!response.ok)throw Error('Fonts unavailable');
+    for(const rule of (await response.text()).match(/@font-face\{[^}]+\}/g)||[]){
+     const family=rule.match(/font-family:'([^']+)'/)?.[1],file=rule.match(/url\('([^']+)'\)/)?.[1];
+     if(used.includes(family)&&file)fontCSS+=rule.replace(file,await embeddedAsset(new URL(file,stylesheet.href).href));
+    }
+   }
+   const container=root.document.createElement('div');container.innerHTML=renderDocument(doc,'raster');const svg=container.firstElementChild;
+   svg.setAttribute('width','1200');svg.setAttribute('height','900');
+   if(fontCSS){const style=root.document.createElementNS('http://www.w3.org/2000/svg','style');style.textContent=fontCSS;svg.prepend(style);}
+   for(const image of svg.querySelectorAll('image')){
+    try{image.setAttribute('href',await embeddedAsset(image.getAttribute('href')))}catch(error){const fallback=image.getAttribute('data-gift-fallback');if(!fallback)throw error;image.setAttribute('href',await embeddedAsset(fallback));}
+    image.removeAttribute('data-gift-fallback');
+   }
+   const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
+   try{
+    const image=new Image();image.src=url;await image.decode();const canvas=root.document.createElement('canvas');canvas.width=1200;canvas.height=900;canvas.getContext('2d').drawImage(image,0,0);
+    const src=canvas.toDataURL('image/png');if(frameCache.size>=16)frameCache.delete(frameCache.keys().next().value);frameCache.set(key,src);
+   }finally{URL.revokeObjectURL(url)}
+   return true;
+  })().catch(()=>false).finally(()=>frameJobs.delete(key));frameJobs.set(key,job);return job;
+ }
+ async function prepare(doc={}){
+  if(!root.document||!['ticker','slideshow'].includes(doc.kind))return false;
+  const items=(doc.items||[]).slice(0,10);let ready=true;
+  // Limit concurrent filter rasterization and memory usage during initial loading.
+  for(let i=0;i<items.length;i+=2){const results=await Promise.all(items.slice(i,i+2).map(item=>prepareFrame(item.document||{})));ready=results.every(Boolean)&&ready;}
+  return ready;
+ }
  const safeImage=url=>/^https:\/\//i.test(url||'')||/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(url||'')?String(url):'';
  function element(v={},index=0){return {id:/^[a-zA-Z0-9_-]{1,60}$/.test(v.id||'')?v.id:'layer-'+index,type:['text','image','gift'].includes(v.type)?v.type:'text',name:String(v.name||'Слой').slice(0,80),text:String(v.text??'ТЕКСТ').slice(0,300),src:safeImage(v.src),giftId:String(v.giftId||v.gift?.id||'').slice(0,80),gift:v.gift,x:clamp(v.x,-800,1600,400),y:clamp(v.y,-600,1200,300),w:clamp(v.w,20,1600,500),h:clamp(v.h,20,1200,160),rotation:clamp(v.rotation,-360,360,0),font:fonts.includes(v.font)?v.font:fonts[0],fontSize:clamp(v.fontSize,10,300,80),fill:color(v.fill,'#ffdc38'),fill2:color(v.fill2,'#ff8a00'),gradient:v.gradient===true,shape:['line','arc','circle'].includes(v.shape)?v.shape:'line',bend:clamp(v.bend,-330,330,120),outline:outlines[v.outline]?v.outline:'sticker',width:clamp(v.width,0,40,8),outer:color(v.outer,'#ffffff'),inner:color(v.inner,'#142417'),hidden:v.hidden===true};}
  function scene(doc={}){
@@ -135,7 +179,7 @@
   prefix=String(prefix).replace(/[^a-zA-Z0-9_-]/g,'');if(depth>1)return '';
   if(doc.kind==='ticker'||doc.kind==='slideshow'){
    const items=(Array.isArray(doc.items)?doc.items:[]).slice(0,10),duration=clamp(doc.duration,2,120,8),gap=clamp(doc.gap,0,200,30),fx=effects(doc.effects);
-   const frames=items.map((item,i)=>renderDocument(item.document||{},prefix+'-'+i,depth+1));let body='';
+   const frames=items.map((item,i)=>{const cached=frameCache.get(JSON.stringify(item.document||{}));return cached?`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><image data-cached-frame="true" href="${cached}" width="800" height="600"/></svg>`:renderDocument(item.document||{},prefix+'-'+i,depth+1)});let body='';
    if(doc.kind==='slideshow')body=frames.map((frame,i)=>{const times=[0],values=[i===0?1:0];if(i>0){times.push(i/items.length);values.push(1)}if(i<items.length-1){times.push((i+1)/items.length);values.push(0)}times.push(1);values.push(i===0?1:0);return `<g opacity="${i===0?1:0}"><animate attributeName="opacity" values="${values.join(';')}" keyTimes="${times.join(';')}" dur="${duration*items.length}s" repeatCount="indefinite" calcMode="discrete"/>${frame}</g>`}).join('');
    else if(items.length){
     const layout=tickerLayout(doc);
@@ -176,5 +220,5 @@
   }).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><defs>${defs}</defs>${body}</svg>`;
  }
 
- const api={render:renderDocument,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
+ const api={render:renderDocument,prepare,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

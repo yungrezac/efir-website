@@ -8,9 +8,11 @@
   if(!response.ok)throw Error('Unavailable');
   const data=await response.json();
   const next=JSON.stringify(data?.document||null);
-  if(next!==previous){target.innerHTML=data?.document?IMMWIGET.render(data.document):'';previous=next;
-   if(data?.document)document.fonts.ready.then(()=>{if(previous===next)target.innerHTML=IMMWIGET.render(data.document)});
+  if(next!==previous){
+   if(data?.document)await IMMWIGET.prepare(data.document);
+   target.innerHTML=data?.document?IMMWIGET.render(data.document):'';previous=next;
+   if(data?.document&&!['ticker','slideshow'].includes(data.document.kind))document.fonts.ready.then(()=>{if(previous===next)target.innerHTML=IMMWIGET.render(data.document)});
   }
- }catch{target.replaceChildren();previous='';}finally{setTimeout(refresh,5000)}}
+ }catch{ /* Keep the last good frame moving during transient network failures. */ }finally{setTimeout(refresh,5000)}}
  refresh();
 })();
