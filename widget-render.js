@@ -99,21 +99,59 @@
   return {count,gap,crops,positions,slots,width,height:600,distance,seconds:clamp(doc.duration,2,120,8)*slots};
  }
  function dimensions(doc={}) {return doc.kind==='ticker'?tickerLayout(doc):{width:800,height:600};}
+ function effects(v={}){
+  v=v&&typeof v==='object'?v:{};
+  return {fade:clamp(v.fade,0,100,0),shade:clamp(v.shade,0,100,0),edgeWidth:clamp(v.edgeWidth,5,40,18),bulge:clamp(v.bulge,-100,100,0),motion:['wave','float','tilt'].includes(v.motion)?v.motion:'none',motionAmount:clamp(v.motionAmount,0,100,35),glow:clamp(v.glow,0,100,0),glowColor:color(v.glowColor,'#baff80'),saturation:clamp(v.saturation,0,200,100),opacity:clamp(v.opacity,10,100,100),direction:v.direction==='right'?'right':'left'};
+ }
+ const effectPresets={clean:{},soft:{fade:100,edgeWidth:18},cinema:{shade:65,fade:80,edgeWidth:22,bulge:35},lens:{bulge:80,fade:100,edgeWidth:20},wave:{motion:'wave',motionAmount:45,fade:100},neon:{glow:55,glowColor:'#bf80ff',saturation:140,fade:100},float:{motion:'float',motionAmount:40,bulge:25,fade:80}};
+ function tickerPose(x,width,viewport,v){
+  const focus=Math.max(0,1-Math.abs((x+width/2)/viewport*2-1)),edge=1-focus*focus;
+  let scale=v.bulge>=0?1-v.bulge/100*.35*edge:1+v.bulge/100*.35*focus*focus;
+  const phase=(x+width/2)/viewport*Math.PI*2,amount=v.motionAmount/100;
+  const y=v.motion==='wave'?Math.sin(phase)*65*amount:v.motion==='float'?-Math.sin(focus*Math.PI/2)*65*amount:0,rotation=v.motion==='tilt'?Math.sin(phase)*12*amount:0;
+  // Reserve room for movement so a full-height source does not hit the top/bottom crop.
+  const angle=rotation*Math.PI/180;scale*=Math.min(1,(600-2*Math.abs(y))/(600*Math.abs(Math.cos(angle))+width*Math.abs(Math.sin(angle))));
+  return {scale,y,rotation};
+ }
+ function decorateComposition(body,size,v,id){
+  let defs='',filter='',mask='';
+  const edge=v.edgeWidth/100;
+  if(v.fade){defs+=`<linearGradient id="${id}-fade-gradient"><stop stop-color="white" stop-opacity="${1-v.fade/100}"/><stop offset="${edge}" stop-color="white"/><stop offset="${1-edge}" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="${1-v.fade/100}"/></linearGradient><mask id="${id}-fade" maskUnits="userSpaceOnUse" x="0" y="0" width="${size.width}" height="600"><rect width="${size.width}" height="600" fill="url(#${id}-fade-gradient)"/></mask>`;mask=`mask="url(#${id}-fade)"`;}
+  if(v.shade||v.glow||v.saturation!==100){
+   let ops=`<feColorMatrix type="saturate" values="${v.saturation/100}" result="paint"/>`;
+   // Use a separate blurred alpha; the source stays crisp and the background transparent.
+   if(v.glow)ops+=`<feGaussianBlur in="SourceAlpha" stdDeviation="${v.glow*.16}" result="halo"/><feFlood flood-color="${v.glowColor}" flood-opacity="${v.glow/100}"/><feComposite in2="halo" operator="in" result="haloColor"/><feMerge result="lit"><feMergeNode in="haloColor"/><feMergeNode in="paint"/></feMerge>`;
+   else ops+='<feMerge result="lit"><feMergeNode in="paint"/></feMerge>';
+   if(v.shade){
+    const dark=Math.round(255*(1-v.shade/100)),ink=`rgb(${dark},${dark},${dark})`;
+    const gradient=`<svg xmlns="http://www.w3.org/2000/svg" width="${size.width}" height="600"><defs><linearGradient id="g"><stop stop-color="${ink}"/><stop offset="${edge}" stop-color="white"/><stop offset="${1-edge}" stop-color="white"/><stop offset="1" stop-color="${ink}"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/></svg>`;
+    ops+=`<feImage href="data:image/svg+xml,${esc(encodeURIComponent(gradient))}" x="0" y="0" width="${size.width}" height="600" result="edgeInk"/><feBlend in="lit" in2="edgeInk" mode="multiply" result="shaded"/><feComposite in="shaded" in2="lit" operator="in"/>`;
+   }
+   defs+=`<filter id="${id}-finish" filterUnits="userSpaceOnUse" x="0" y="0" width="${size.width}" height="600" color-interpolation-filters="sRGB">${ops}</filter>`;filter=`filter="url(#${id}-finish)"`;
+  }
+  return `<defs>${defs}</defs><g opacity="${v.opacity/100}" ${mask}><g ${filter}>${body}</g></g>`;
+ }
  function renderDocument(doc={},prefix='scene',depth=0){
   prefix=String(prefix).replace(/[^a-zA-Z0-9_-]/g,'');if(depth>1)return '';
   if(doc.kind==='ticker'||doc.kind==='slideshow'){
-   const items=(Array.isArray(doc.items)?doc.items:[]).slice(0,10),duration=clamp(doc.duration,2,120,8),gap=clamp(doc.gap,0,200,30);
+   const items=(Array.isArray(doc.items)?doc.items:[]).slice(0,10),duration=clamp(doc.duration,2,120,8),gap=clamp(doc.gap,0,200,30),fx=effects(doc.effects);
    const frames=items.map((item,i)=>renderDocument(item.document||{},prefix+'-'+i,depth+1));let body='';
    if(doc.kind==='slideshow')body=frames.map((frame,i)=>{const times=[0],values=[i===0?1:0];if(i>0){times.push(i/items.length);values.push(1)}if(i<items.length-1){times.push((i+1)/items.length);values.push(0)}times.push(1);values.push(i===0?1:0);return `<g opacity="${i===0?1:0}"><animate attributeName="opacity" values="${values.join(';')}" keyTimes="${times.join(';')}" dur="${duration*items.length}s" repeatCount="indefinite" calcMode="discrete"/>${frame}</g>`}).join('');
    else if(items.length){
     const layout=tickerLayout(doc);
     // Define expensive artwork once. Two identical periods cover the viewport at every phase.
     const symbols=frames.map((frame,i)=>{const crop=layout.crops[i];return `<g id="${prefix}-source-${i}">${frame.replace('viewBox="0 0 800 600"',`viewBox="${crop.x} 0 ${crop.width} 600"`).replace('<svg ',`<svg width="${crop.width}" height="600" `)}</g>`}).join('');
-    const strip=layout.positions.map((x,i)=>`<use href="#${prefix}-source-${i%items.length}" transform="translate(${x} 0)"/>`).join('');
-    body=`<defs>${symbols}</defs><style>@keyframes ${prefix}-ticker{from{transform:translateX(0)}to{transform:translateX(-${layout.distance}px)}}</style><g data-ticker-track="true" style="animation:${prefix}-ticker ${layout.seconds}s linear infinite;will-change:transform">${strip}</g>`;
+    let poses='';const reverse=fx.direction==='right'?' reverse':'';
+    const strip=layout.positions.map((x,i)=>{
+     if(!fx.bulge&&fx.motion==='none')return `<use href="#${prefix}-source-${i%items.length}" transform="translate(${x} 0)"/>`;
+     const width=layout.crops[i%items.length].width,name=`${prefix}-pose-${i}`;
+     poses+=`@keyframes ${name}{`+Array.from({length:65},(_,step)=>{const p=tickerPose(x-layout.distance*step/64,width,layout.width,fx);return `${step/64*100}%{transform:translateY(${p.y.toFixed(3)}px) rotate(${p.rotation.toFixed(3)}deg) scale(${p.scale.toFixed(4)})}`}).join('')+'}';
+     return `<g transform="translate(${x+width/2} 300)"><g data-ticker-pose="true" style="animation:${name} ${layout.seconds}s linear infinite${reverse};will-change:transform"><use href="#${prefix}-source-${i%items.length}" transform="translate(${-width/2} -300)"/></g></g>`;
+    }).join('');
+    body=`<defs>${symbols}</defs><style>@keyframes ${prefix}-ticker{from{transform:translateX(0)}to{transform:translateX(-${layout.distance}px)}}${poses}</style><g data-ticker-track="true" style="animation:${prefix}-ticker ${layout.seconds}s linear infinite${reverse};will-change:transform">${strip}</g>`;
    }
    const size=dimensions(doc);
-   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size.width} ${size.height}" overflow="hidden" role="img">${body}</svg>`;
+   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size.width} ${size.height}" overflow="hidden" role="img">${decorateComposition(body,size,fx,prefix)}</svg>`;
   }
   if(!Array.isArray(doc.elements)){const svg=legacyRender(doc);if(prefix==='scene')return svg;return svg.replace(/id="([^"]+)"/g,(_,id)=>`id="${prefix}-${id}"`).replace(/href="#([^"]+)"/g,(_,id)=>`href="#${prefix}-${id}"`).replace(/url\(#([^)]+)\)/g,(_,id)=>`url(#${prefix}-${id})`);}
   let defs='';const body=doc.elements.slice(0,40).map((value,i)=>{
@@ -138,5 +176,5 @@
   }).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><defs>${defs}</defs>${body}</svg>`;
  }
 
- const api={render:renderDocument,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
+ const api={render:renderDocument,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
