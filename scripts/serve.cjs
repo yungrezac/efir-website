@@ -18,6 +18,7 @@ const publicFiles = new Set([
   '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
   '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html'
+  ,'/widget.html','/widget-render.js','/widget-public.js'
 ]);
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -53,7 +54,8 @@ const server = http.createServer(async (request, response) => {
   }
 
   try {
-    const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replaceAll('\\', '/');
+    let pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replaceAll('\\', '/');
+    if (/^\/widget\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(pathname)) pathname='/widget.html';
     if ((pathname==='/'||pathname==='/index.html') && !(await homepageEnabled())) {
       response.writeHead(503,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Retry-After':'60','X-Robots-Tag':'noindex','Content-Length':maintenancePage.length});
       response.end(request.method==='HEAD'?undefined:maintenancePage);return;
