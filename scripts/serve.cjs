@@ -8,6 +8,7 @@ const path = require('node:path');
 const siteRoot = path.resolve(__dirname, '..');
 const protectService = require('./protect-service.cjs').createProtectService();
 const homepageEnabled = require('./homepage-status.cjs').createHomepageStatus();
+const launcherLicense = require('./launcher-license.cjs').createLauncherLicense();
 const maintenancePage = fs.readFileSync(path.join(siteRoot,'maintenance.html'));
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
@@ -50,6 +51,7 @@ const server = http.createServer(async (request, response) => {
     response.end(request.method === 'HEAD' ? undefined : message);
   };
 
+  if (await launcherLicense(request, response)) return;
   if (!['GET', 'HEAD'].includes(request.method)) {
     return fail(405, 'Method not allowed', { Allow: 'GET, HEAD' });
   }
