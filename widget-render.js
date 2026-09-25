@@ -4,6 +4,17 @@
  const fonts=['Arial Black','Ruslan Display','Rubik Mono One','Rubik Glitch','Rubik Wet Paint','Rubik Beastly','Rubik Burned','Rubik Dirt','Rubik Moonrocks','Rubik Scribble','Rubik Spray Paint','Rubik Vinyl','Rubik Bubbles','Caveat','Lobster','Comfortaa','Oswald'];
  const outlines={sticker:'Классический стикер',single:'Один контур',double:'Двойной контур',triple:'Тройной контур',neon:'Неоновое свечение',extrude:'Объёмная тень',comic:'Комикс',dashed:'Пунктир',offset:'Смещённый контур',none:'Без обводки'};
  const layerIds=['decor','gift','heading','text','caption'];
+ // Gallery thumbnails stay small; scenes use the CDN's unresized original.
+ function giftImage(url){
+  const original=safeImage(url);let full=original;
+  try{const parsed=new URL(original);if(/^p\d+-webcast\.tiktokcdn\.com$/.test(parsed.hostname)&&/^\/img\//.test(parsed.pathname)&&!parsed.search){parsed.pathname=parsed.pathname.replace(/~tplv-resize:\d+:\d+\.(?:webp|png)$/i,'~tplv-obj.png');full=parsed.href;}}catch{}
+  return `href="${esc(full)}"${full!==original?` data-gift-fallback="${esc(original)}"`:''}`;
+ }
+ // Keep the gift visible if an older CDN asset has no original endpoint.
+ if(root.document)root.document.addEventListener('error',event=>{
+  const node=event.target;if(node?.localName!=='image'||!node.hasAttribute('data-gift-fallback'))return;
+  const fallback=node.getAttribute('data-gift-fallback');node.removeAttribute('data-gift-fallback');node.setAttribute('href',fallback);
+ },true);
  const clamp=(x,min,max,fallback)=>x!==null&&x!==''&&Number.isFinite(Number(x))?Math.max(min,Math.min(max,Number(x))):fallback;
  const color=(x,fallback)=>/^#[0-9a-f]{6}$/i.test(x||'')?x:fallback;
  function layer(v={}){return {x:clamp(v.x,-800,800,0),y:clamp(v.y,-600,600,0),scale:clamp(v.scale,.2,3,1),rotation:clamp(v.rotation,-180,180,0),curve:clamp(v.curve,-180,180,0),font:fonts.includes(v.font)?v.font:fonts[0],outline:outlines[v.outline]?v.outline:'sticker',width:clamp(v.width,0,40,12),outer:color(v.outer,'#fffdf2'),inner:color(v.inner,'#173421')};}
@@ -25,7 +36,7 @@
  if(s.outline==='none')result=glyph('none',0);return result;}
  const y=image?430:260;let decor='';
  if(doc.decor!==false)for(const [x,y,r] of [[95,190,-15],[702,160,18],[112,455,12],[690,450,-10]])decor+=`<g transform="translate(${x} ${y}) rotate(${r})"><path d="M0 -22 L7 -7 23 -5 11 7 15 23 0 15 -15 23 -11 7 -23 -5 -7 -7Z" fill="url(#ink)" stroke="#fff" stroke-width="12" paint-order="stroke fill"/></g>`;
- const parts={decor,gift:image?`<image href="${esc(doc.gift.icon)}" x="${400-giftSize/2}" y="${330-giftSize}" width="${giftSize}" height="${giftSize}"/>`:'',heading:text('heading',doc.heading,image?55:y-98,48),text:text('text',doc.text,y,size),caption:text('caption',doc.caption,y+90,48)};
+ const parts={decor,gift:image?`<image ${giftImage(doc.gift.icon)} x="${400-giftSize/2}" y="${330-giftSize}" width="${giftSize}" height="${giftSize}"/>`:'',heading:text('heading',doc.heading,image?55:y-98,48),text:text('text',doc.text,y,size),caption:text('caption',doc.caption,y+90,48)};
  const body=order(doc.layerOrder).map(id=>{const s=layer(doc.layers?.[id]);return `<g data-layer="${id}" transform="translate(${s.x} ${s.y}) translate(400 300) rotate(${s.rotation}) scale(${s.scale}) translate(-400 -300)">${parts[id]}</g>`}).join('');
  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="${esc(doc.text)}"><defs><linearGradient id="ink" x2="0" y2="1"><stop stop-color="${palette[0]}"/><stop offset=".65" stop-color="${palette[1]}"/><stop offset="1" stop-color="${palette[2]}"/></linearGradient><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="8" stdDeviation="3" flood-opacity=".25"/></filter><filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>${paths}</defs><g filter="url(#shadow)">${doc.animate?'<animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="3s" repeatCount="indefinite"/>':''}${body}</g></svg>`;
  }
@@ -82,7 +93,7 @@
     const src=safeImage(e.type==='gift'?(e.gift?.icon||e.src):e.src);if(!src)return '';
     const morph=(radius,paint,result)=>`<feMorphology in="SourceAlpha" operator="dilate" radius="${radius}" result="${result}-mask"/><feFlood flood-color="${paint}"/><feComposite in2="${result}-mask" operator="in" result="${result}"/>`;
     let filter='';if(e.outline!=='none'&&w>0){const double=['sticker','double','triple','comic'].includes(e.outline),triple=e.outline==='triple';let ops=morph(w*(triple?3:double?2:1),e.outer,'outer');if(double)ops+=morph(w,e.inner,'inner');if(triple)ops+=morph(w*2,e.inner,'middle')+morph(w,e.fill2,'inner');if(e.outline==='neon')ops+='<feGaussianBlur in="outer" stdDeviation="6" result="outer"/>';if(['offset','extrude','comic'].includes(e.outline))ops+='<feOffset in="outer" dx="8" dy="8" result="outer"/>';defs+=`<filter id="${id}-edge" x="-200%" y="-200%" width="500%" height="500%" color-interpolation-filters="sRGB">${ops}<feMerge><feMergeNode in="outer"/>${triple?'<feMergeNode in="middle"/>':''}${double?'<feMergeNode in="inner"/>':''}<feMergeNode in="SourceGraphic"/></feMerge></filter>`;filter=`filter="url(#${id}-edge)"`;}
-    content=`<image href="${esc(src)}" x="${-e.w/2}" y="${-e.h/2}" width="${e.w}" height="${e.h}" preserveAspectRatio="xMidYMid meet" ${filter}/>`;
+    content=`<image ${e.type==='gift'?giftImage(src):`href="${esc(src)}"`} x="${-e.w/2}" y="${-e.h/2}" width="${e.w}" height="${e.h}" preserveAspectRatio="xMidYMid meet" ${filter}/>`;
    }
    return `<g data-layer="${esc(e.id)}" transform="translate(${e.x} ${e.y}) rotate(${e.rotation})">${content}</g>`;
   }).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><defs>${defs}</defs>${body}</svg>`;
