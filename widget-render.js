@@ -43,14 +43,27 @@
   }
   return {version:3,kind:'widget',elements:els};
  }
+ function tickerLayout(doc={}) {
+  const count=Math.round(clamp(doc.visibleCount,1,20,4)),gap=clamp(doc.gap,0,200,30),sources=Math.min(10,Array.isArray(doc.items)?doc.items.length:0);
+  const stride=800+gap,slots=sources?Math.ceil(count/sources)*sources:0;
+  return {count,gap,stride,slots,width:count*stride-gap,height:600,distance:slots*stride,seconds:clamp(doc.duration,2,120,8)*slots};
+ }
+ function dimensions(doc={}) {return doc.kind==='ticker'?tickerLayout(doc):{width:800,height:600};}
  function renderDocument(doc={},prefix='scene',depth=0){
   prefix=String(prefix).replace(/[^a-zA-Z0-9_-]/g,'');if(depth>1)return '';
   if(doc.kind==='ticker'||doc.kind==='slideshow'){
    const items=(Array.isArray(doc.items)?doc.items:[]).slice(0,10),duration=clamp(doc.duration,2,120,8),gap=clamp(doc.gap,0,200,30);
    const frames=items.map((item,i)=>renderDocument(item.document||{},prefix+'-'+i,depth+1));let body='';
    if(doc.kind==='slideshow')body=frames.map((frame,i)=>{const times=[0],values=[i===0?1:0];if(i>0){times.push(i/items.length);values.push(1)}if(i<items.length-1){times.push((i+1)/items.length);values.push(0)}times.push(1);values.push(i===0?1:0);return `<g opacity="${i===0?1:0}"><animate attributeName="opacity" values="${values.join(';')}" keyTimes="${times.join(';')}" dur="${duration*items.length}s" repeatCount="indefinite" calcMode="discrete"/>${frame}</g>`}).join('');
-   else if(items.length){const stride=800+gap,total=items.length*stride,strip=frames.map((frame,i)=>`<g transform="translate(${i*stride} 0)">${frame}</g>`).join('');body=`<g><animateTransform attributeName="transform" type="translate" from="0 0" to="-${total} 0" dur="${duration*items.length}s" repeatCount="indefinite"/>${strip}<g transform="translate(${total} 0)">${strip.replaceAll(prefix,prefix+'-repeat')}</g></g>`;}
-   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" overflow="hidden">${body}</svg>`;
+   else if(items.length){
+    const layout=tickerLayout(doc);
+    // Define expensive artwork once. Two identical periods cover the viewport at every phase.
+    const symbols=frames.map((frame,i)=>`<g id="${prefix}-source-${i}">${frame.replace('<svg ','<svg width="800" height="600" ')}</g>`).join('');
+    const strip=Array.from({length:layout.slots*2},(_,i)=>`<use href="#${prefix}-source-${i%items.length}" transform="translate(${i*layout.stride} 0)"/>`).join('');
+    body=`<defs>${symbols}</defs><style>@keyframes ${prefix}-ticker{from{transform:translateX(0)}to{transform:translateX(-${layout.distance}px)}}</style><g data-ticker-track="true" style="animation:${prefix}-ticker ${layout.seconds}s linear infinite;will-change:transform">${strip}</g>`;
+   }
+   const size=dimensions(doc);
+   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size.width} ${size.height}" overflow="hidden" role="img">${body}</svg>`;
   }
   if(!Array.isArray(doc.elements)){const svg=legacyRender(doc);if(prefix==='scene')return svg;return svg.replace(/id="([^"]+)"/g,(_,id)=>`id="${prefix}-${id}"`).replace(/href="#([^"]+)"/g,(_,id)=>`href="#${prefix}-${id}"`).replace(/url\(#([^)]+)\)/g,(_,id)=>`url(#${prefix}-${id})`);}
   let defs='';const body=doc.elements.slice(0,40).map((value,i)=>{
@@ -75,5 +88,5 @@
   }).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><defs>${defs}</defs>${body}</svg>`;
  }
 
- const api={render:renderDocument,fonts,outlines,layer,order,layerIds,element,scene};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
+ const api={render:renderDocument,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
