@@ -73,7 +73,8 @@
    const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
    try{
     const image=new Image();image.src=url;await image.decode();const canvas=root.document.createElement('canvas');canvas.width=1200;canvas.height=900;canvas.getContext('2d').drawImage(image,0,0);
-    const src=canvas.toDataURL('image/png');if(frameCache.size>=16)frameCache.delete(frameCache.keys().next().value);frameCache.set(key,src);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error('Frame encoding failed')),'image/png'));
+    const src=URL.createObjectURL(blob);if(frameCache.size>=16){const oldest=frameCache.keys().next().value;URL.revokeObjectURL(frameCache.get(oldest));frameCache.delete(oldest);}frameCache.set(key,src);
    }finally{URL.revokeObjectURL(url)}
    return true;
   })().catch(()=>false).finally(()=>frameJobs.delete(key));frameJobs.set(key,job);return job;
@@ -84,6 +85,40 @@
   // Limit concurrent filter rasterization and memory usage during initial loading.
   for(let i=0;i<items.length;i+=2){const results=await Promise.all(items.slice(i,i+2).map(item=>prepareFrame(item.document||{})));ready=results.every(Boolean)&&ready;}
   return ready;
+ }
+ const mounts=new WeakMap();
+ function stop(target){const old=mounts.get(target);if(old){old.dispose?.();mounts.delete(target)}}
+ async function mount(target,doc,prefix='playback'){
+  stop(target);
+  const fx=effects(doc?.effects),items=doc?.items||[];
+  // SVG remains the fallback for source errors and the alpha-preserving shading filter.
+  if(doc?.kind!=='ticker'||fx.shade||!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{})))){target.innerHTML=doc?renderDocument(doc,prefix):'';return false;}
+  prefix=String(prefix).replace(/[^a-zA-Z0-9_-]/g,'');
+  const layout=tickerLayout(doc),reverse=fx.direction==='right'?' reverse':'',holder=root.document.createElement('div');
+  holder.dataset.compositorTicker='true';holder.setAttribute('role','img');holder.setAttribute('aria-label','Бегущая строка');
+  holder.style.cssText='position:relative;width:100%;height:100%;overflow:hidden;contain:layout paint';
+  let css=`@keyframes ${prefix}-slide{from{transform:translate3d(0,0,0)}to{transform:translate3d(-${layout.distance}px,0,0)}}`;
+  const parts=layout.positions.map((x,i)=>{
+   const crop=layout.crops[i%items.length],src=frameCache.get(JSON.stringify(items[i%items.length].document||{}));let pose='';
+   if(fx.bulge||fx.motion!=='none'){
+    const name=`${prefix}-volume-${i}`;
+    css+=`@keyframes ${name}{`+Array.from({length:65},(_,step)=>{const p=tickerPose(x-layout.distance*step/64,crop.width,layout.width,fx);return `${step/64*100}%{transform:translate3d(0,${p.y.toFixed(3)}px,0) rotate(${p.rotation.toFixed(3)}deg) scale(${p.scale.toFixed(4)})}`}).join('')+'}';
+    pose=`animation:${name} ${layout.seconds}s linear infinite${reverse};will-change:transform;`;
+   }
+   return `<div data-ticker-item style="position:absolute;left:${x}px;top:0;width:${crop.width}px;height:600px"><div data-ticker-pose style="width:100%;height:100%;transform-origin:50% 50%;${pose}"><div style="position:relative;width:100%;height:100%;overflow:hidden"><img data-cached-frame src="${src}" alt="" draggable="false" style="position:absolute;max-width:none;left:${-crop.x}px;top:0;width:800px;height:600px"></div></div></div>`;
+  }).join('');
+  const mask=fx.fade?`linear-gradient(to right,rgba(0,0,0,${1-fx.fade/100}),#000 ${fx.edgeWidth}%,#000 ${100-fx.edgeWidth}%,rgba(0,0,0,${1-fx.fade/100}))`:'none';
+  const filter=fx.saturation===100&&!fx.glow?'none':`saturate(${fx.saturation/100})${fx.glow?` drop-shadow(0 0 ${fx.glow*.16}px ${fx.glowColor})`:''}`;
+  holder.innerHTML=`<style>${css}</style><div data-ticker-viewport style="position:absolute;left:50%;top:50%;width:${layout.width}px;height:600px;transform-origin:50% 50%;overflow:hidden;opacity:${fx.opacity/100};mask-image:${mask};-webkit-mask-image:${mask};mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat"><div style="width:100%;height:100%;filter:${filter}"><div data-ticker-track style="position:relative;width:${layout.distance*2}px;height:600px;animation:${prefix}-slide ${layout.seconds}s linear infinite${reverse};will-change:transform">${parts}</div></div></div>`;
+  const state={};mounts.set(target,state);
+  // Decode before attaching animated elements, so the first loop has no decode stalls.
+  try{await Promise.all(Array.from(holder.querySelectorAll('img'),img=>img.decode()))}catch{if(mounts.get(target)===state){mounts.delete(target);target.innerHTML=renderDocument(doc,prefix)}return false}
+  if(mounts.get(target)!==state)return false;
+  target.replaceChildren(holder);
+  const viewport=holder.querySelector('[data-ticker-viewport]');
+  const fit=()=>{const scale=Math.min(holder.clientWidth/layout.width,holder.clientHeight/600);viewport.style.transform=`translate3d(-50%,-50%,0) scale(${scale})`;};
+  fit();if(root.ResizeObserver){const observer=new ResizeObserver(fit);observer.observe(holder);state.dispose=()=>observer.disconnect()}else{root.addEventListener('resize',fit);state.dispose=()=>root.removeEventListener('resize',fit)}
+  return true;
  }
  const safeImage=url=>/^https:\/\//i.test(url||'')||/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(url||'')?String(url):'';
  function element(v={},index=0){return {id:/^[a-zA-Z0-9_-]{1,60}$/.test(v.id||'')?v.id:'layer-'+index,type:['text','image','gift'].includes(v.type)?v.type:'text',name:String(v.name||'Слой').slice(0,80),text:String(v.text??'ТЕКСТ').slice(0,300),src:safeImage(v.src),giftId:String(v.giftId||v.gift?.id||'').slice(0,80),gift:v.gift,x:clamp(v.x,-800,1600,400),y:clamp(v.y,-600,1200,300),w:clamp(v.w,20,1600,500),h:clamp(v.h,20,1200,160),rotation:clamp(v.rotation,-360,360,0),font:fonts.includes(v.font)?v.font:fonts[0],fontSize:clamp(v.fontSize,10,300,80),fill:color(v.fill,'#ffdc38'),fill2:color(v.fill2,'#ff8a00'),gradient:v.gradient===true,shape:['line','arc','circle'].includes(v.shape)?v.shape:'line',bend:clamp(v.bend,-330,330,120),outline:outlines[v.outline]?v.outline:'sticker',width:clamp(v.width,0,40,8),outer:color(v.outer,'#ffffff'),inner:color(v.inner,'#142417'),hidden:v.hidden===true};}
@@ -220,5 +255,5 @@
   }).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><defs>${defs}</defs>${body}</svg>`;
  }
 
- const api={render:renderDocument,prepare,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
+ const api={render:renderDocument,prepare,mount,stop,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);

@@ -10,7 +10,7 @@
   const next=JSON.stringify(data?.document||null);
   if(next!==previous){
    if(data?.document)await IMMWIGET.prepare(data.document);
-   target.innerHTML=data?.document?IMMWIGET.render(data.document):'';previous=next;
+   await IMMWIGET.mount(target,data?.document||null);previous=next;
    if(data?.document&&!['ticker','slideshow'].includes(data.document.kind))document.fonts.ready.then(()=>{if(previous===next)target.innerHTML=IMMWIGET.render(data.document)});
   }
  }catch{ /* Keep the last good frame moving during transient network failures. */ }finally{setTimeout(refresh,5000)}}
