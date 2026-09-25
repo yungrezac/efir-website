@@ -8,7 +8,9 @@
   if(!response.ok)throw Error('Unavailable');
   const data=await response.json();
   const next=JSON.stringify(data?.document||null);
-  if(next!==previous){target.innerHTML=data?.document?IMMWIGET.render(data.document):'';previous=next;}
+  if(next!==previous){target.innerHTML=data?.document?IMMWIGET.render(data.document):'';previous=next;
+   if(data?.document)document.fonts.ready.then(()=>{if(previous===next)target.innerHTML=IMMWIGET.render(data.document)});
+  }
  }catch{target.replaceChildren();previous='';}finally{setTimeout(refresh,5000)}}
  refresh();
 })();
