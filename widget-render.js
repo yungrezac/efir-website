@@ -88,8 +88,9 @@
  }
  const mounts=new WeakMap();
  function stop(target){const old=mounts.get(target);if(old){old.dispose?.();mounts.delete(target)}}
- async function mount(target,doc,prefix='playback'){
+ async function mount(target,doc,prefix='playback',options={}){
   stop(target);
+  if(options.mode==='compatible'&&doc?.kind==='ticker')return mountCompatible(target,doc);
   const fx=effects(doc?.effects),items=doc?.items||[];
   // SVG remains the fallback for source errors and the alpha-preserving shading filter.
   if(doc?.kind!=='ticker'||fx.shade||!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{})))){target.innerHTML=doc?renderDocument(doc,prefix):'';return false;}
@@ -118,6 +119,50 @@
   const viewport=holder.querySelector('[data-ticker-viewport]');
   const fit=()=>{const scale=Math.min(holder.clientWidth/layout.width,holder.clientHeight/600);viewport.style.transform=`translate3d(-50%,-50%,0) scale(${scale})`;};
   fit();if(root.ResizeObserver){const observer=new ResizeObserver(fit);observer.observe(holder);state.dispose=()=>observer.disconnect()}else{root.addEventListener('resize',fit);state.dispose=()=>root.removeEventListener('resize',fit)}
+  return true;
+ }
+ // A bounded canvas avoids a very wide composited strip in embedded browsers.
+ // Time determines position; missed frames never accumulate timer drift.
+ async function mountCompatible(target,doc){
+  const items=(doc.items||[]).slice(0,10),state={};mounts.set(target,state);
+  if(!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{})))){target.innerHTML=renderDocument(doc);return false;}
+  let images;
+  try{images=await Promise.all(items.map(async item=>{const image=new Image();image.src=frameCache.get(JSON.stringify(item.document||{}));await image.decode();return image}))}catch{if(mounts.get(target)===state)target.innerHTML=renderDocument(doc);return false;}
+  if(mounts.get(target)!==state)return false;
+  const layout=tickerLayout(doc),fx=effects(doc.effects),canvas=root.document.createElement('canvas');
+  canvas.dataset.compatibleTicker='true';canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Бегущая строка');
+  canvas.style.cssText='display:block;width:100%;height:100%;object-fit:contain';
+  const context=canvas.getContext('2d',{alpha:true});
+  if(!context){target.innerHTML=renderDocument(doc);return false;}
+  const started=performance.now();let raf=0,scale=1,last=-Infinity,fade=null,sprites=images;
+  function draw(now){
+   context.setTransform(1,0,0,1,0,0);context.clearRect(0,0,canvas.width,canvas.height);
+   context.save();context.scale(scale,scale);context.globalAlpha=fx.opacity/100;
+   const fraction=((now-started)*.65/(layout.seconds*1000))%1;
+   const offset=(fx.direction==='right'?1-fraction:fraction)*layout.distance;
+   for(let i=0;i<layout.positions.length;i++){
+    const crop=layout.crops[i%items.length],x=layout.positions[i]-offset;
+    if(x+crop.width<=0||x>=layout.width)continue;
+    context.save();context.beginPath();context.rect(x,0,crop.width,600);context.clip();
+    context.drawImage(sprites[i%items.length],x-crop.x,0,800,600);context.restore();
+   }
+   context.restore();
+   if(fade){context.globalCompositeOperation='destination-in';context.fillStyle=fade;context.fillRect(0,0,canvas.width,canvas.height);context.globalCompositeOperation='source-over';}
+  }
+  function fit(){
+   const ratio=Math.min(root.devicePixelRatio||1,1.5);
+   scale=Math.max(.001,Math.min(target.clientWidth*ratio/layout.width,target.clientHeight*ratio/600,1920/layout.width,1080/600));
+   canvas.width=Math.max(1,Math.round(layout.width*scale));canvas.height=Math.max(1,Math.round(600*scale));
+   context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
+   // Resample once per resize instead of scaling full-size source artwork every frame.
+   sprites=images.map(image=>{const sprite=root.document.createElement('canvas');sprite.width=Math.max(1,Math.round(800*scale));sprite.height=Math.max(1,Math.round(600*scale));const ctx=sprite.getContext('2d');ctx.imageSmoothingQuality='high';ctx.drawImage(image,0,0,sprite.width,sprite.height);return sprite});
+   fade=null;if(fx.fade){fade=context.createLinearGradient(0,0,canvas.width,0);fade.addColorStop(0,`rgba(0,0,0,${1-fx.fade/100})`);fade.addColorStop(fx.edgeWidth/100,'#000');fade.addColorStop(1-fx.edgeWidth/100,'#000');fade.addColorStop(1,`rgba(0,0,0,${1-fx.fade/100})`);}
+   draw(performance.now());
+  }
+  function frame(now){if(now+.5>=last){last=started+(Math.floor((now-started+.5)/(1000/30))+1)*(1000/30);draw(now)}raf=requestAnimationFrame(frame)}
+  target.replaceChildren(canvas);fit();raf=requestAnimationFrame(frame);
+  let observer;if(root.ResizeObserver){observer=new ResizeObserver(fit);observer.observe(target)}else root.addEventListener('resize',fit);
+  state.dispose=()=>{cancelAnimationFrame(raf);observer?.disconnect();root.removeEventListener('resize',fit)};
   return true;
  }
  const safeImage=url=>/^https:\/\//i.test(url||'')||/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(url||'')?String(url):'';
