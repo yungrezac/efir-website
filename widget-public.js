@@ -12,7 +12,7 @@
   const changed=next!==previous;
   if(changed||(pending&&Date.now()>=retryAt)){
    if(changed){retryDelay=5000;pending=false;}
-   const composition=['ticker','slideshow'].includes(data?.document?.kind);
+   const composition=['ticker','slideshow'].includes(data?.document?.kind)||!!IMMWIGET.raster?.(data?.document);
    const ready=data?.document?await IMMWIGET.prepare(data.document):true;
    // A temporary CDN failure must not strand this page in the expensive fallback.
    // Failed retries keep the existing DOM and its animation phase untouched.
@@ -21,7 +21,7 @@
    pending=composition&&(!ready||(mode==='compatible'&&data.document.kind==='ticker'&&!mounted));
    if(pending){retryAt=Date.now()+retryDelay;retryDelay=Math.min(60000,retryDelay*2);}
    previous=next;
-   if(data?.document&&!['ticker','slideshow'].includes(data.document.kind))document.fonts.ready.then(()=>{if(previous===next)target.innerHTML=IMMWIGET.render(data.document)});
+   if(data?.document&&!IMMWIGET.raster?.(data.document)&&!['ticker','slideshow'].includes(data.document.kind))document.fonts.ready.then(()=>{if(previous===next)target.innerHTML=IMMWIGET.render(data.document)});
   }
  }catch{ /* Keep the last good frame moving during transient network failures. */ }finally{setTimeout(refresh,5000)}}
  refresh();

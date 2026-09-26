@@ -42,6 +42,11 @@
  }
  const legacyRender=render;
  const frameCache=new Map(),frameJobs=new Map(),assetCache=new Map();
+ function raster(doc){
+  const v=doc?.raster,b=v?.bounds;
+  return v?.version===1&&v.width===1200&&v.height===900&&/^https:\/\/qpoyojxupblhjeqbvqfr\.supabase\.co\/storage\/v1\/object\/public\/immwiget-renders\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f]{64}\.webp$/.test(v.url||'')&&b&&Number.isFinite(b.x)&&Number.isFinite(b.width)&&b.x>=0&&b.width>=1&&b.x+b.width<=800?v:null;
+ }
+ function cacheFrame(key,src){if(frameCache.size>=16){const oldest=frameCache.keys().next().value;URL.revokeObjectURL(frameCache.get(oldest));frameCache.delete(oldest)}frameCache.set(key,src)}
  async function embeddedAsset(url){
   if(url.startsWith('data:'))return url;
   if(assetCache.has(url))return assetCache.get(url);
@@ -50,9 +55,16 @@
   try{return await job}catch(error){assetCache.delete(url);throw error}
  }
  async function prepareFrame(doc){
-  if(doc.animate)return false;
+  if(doc.animate&&!raster(doc))return false;
   const key=JSON.stringify(doc);if(frameCache.has(key))return true;if(frameJobs.has(key))return frameJobs.get(key);
   const job=(async()=>{
+   const ready=raster(doc);
+   if(ready){
+    const response=await fetch(ready.url,{signal:AbortSignal.timeout(12000)});if(!response.ok)throw Error('WebP unavailable');
+    const url=URL.createObjectURL(await response.blob());
+    try{const image=new Image();image.src=url;await image.decode();if(image.naturalWidth!==1200||image.naturalHeight!==900)throw Error('WebP dimensions');cacheFrame(key,url)}catch(error){URL.revokeObjectURL(url);throw error}
+    return true;
+   }
    const used=[...new Set(scene(doc).elements.filter(e=>e.type==='text').map(e=>e.font||'Arial Black'))];
    await Promise.all(used.map(font=>root.document.fonts.load(`80px "${font}"`)));
    let fontCSS='';const stylesheet=root.document.querySelector('link[href$="fonts.css"]');
@@ -74,22 +86,34 @@
    try{
     const image=new Image();image.src=url;await image.decode();const canvas=root.document.createElement('canvas');canvas.width=1200;canvas.height=900;canvas.getContext('2d').drawImage(image,0,0);
     const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error('Frame encoding failed')),'image/png'));
-    const src=URL.createObjectURL(blob);if(frameCache.size>=16){const oldest=frameCache.keys().next().value;URL.revokeObjectURL(frameCache.get(oldest));frameCache.delete(oldest);}frameCache.set(key,src);
+    cacheFrame(key,URL.createObjectURL(blob));
    }finally{URL.revokeObjectURL(url)}
    return true;
   })().catch(()=>false).finally(()=>frameJobs.delete(key));frameJobs.set(key,job);return job;
  }
  async function prepare(doc={}){
+  if(root.document&&raster(doc))return prepareFrame(doc);
   if(!root.document||!['ticker','slideshow'].includes(doc.kind))return false;
   const items=(doc.items||[]).slice(0,10);let ready=true;
   // Limit concurrent filter rasterization and memory usage during initial loading.
   for(let i=0;i<items.length;i+=2){const results=await Promise.all(items.slice(i,i+2).map(item=>prepareFrame(item.document||{})));ready=results.every(Boolean)&&ready;}
   return ready;
  }
+ async function exportRaster(doc){
+  const clean={...doc};delete clean.raster;
+  if(clean.animate)clean.animate=false;
+  if(!await prepareFrame(clean))throw Error('Не удалось подготовить изображение: проверьте загрузку подарков и шрифтов.');
+  const blob=await (await fetch(frameCache.get(JSON.stringify(clean)))).blob();
+  const png=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob)});
+  return {png,bounds:horizontalBounds(clean)};
+ }
  const mounts=new WeakMap();
  function stop(target){const old=mounts.get(target);if(old){old.dispose?.();mounts.delete(target)}}
  async function mount(target,doc,prefix='playback',options={}){
   stop(target);
+  if(raster(doc)&&doc.kind!=='ticker'&&doc.kind!=='slideshow'){
+   const image=new Image();image.src=frameCache.get(JSON.stringify(doc))||raster(doc).url;image.alt='Виджет';image.style.cssText='width:100%;height:100%;object-fit:contain';target.replaceChildren(image);return true;
+  }
   if(options.mode==='compatible'&&doc?.kind==='ticker')return mountCompatible(target,doc);
   const fx=effects(doc?.effects),items=doc?.items||[];
   // SVG remains the fallback for source errors and the alpha-preserving shading filter.
@@ -181,6 +205,7 @@
  const boundsCache=new Map();
  if(root.document?.fonts)root.document.fonts.addEventListener('loadingdone',()=>boundsCache.clear());
  function horizontalBounds(doc={}){
+  if(raster(doc))return {...raster(doc).bounds};
   if(!Array.isArray(doc.elements))return {x:0,width:800};
   const key=JSON.stringify(doc);if(boundsCache.has(key))return boundsCache.get(key);
   const elements=doc.elements.slice(0,40).map(element).filter(e=>!e.hidden&&(e.type==='text'?e.text.trim():safeImage(e.gift?.icon||e.src)));
@@ -300,5 +325,5 @@
   }).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><defs>${defs}</defs>${body}</svg>`;
  }
 
- const api={render:renderDocument,prepare,mount,stop,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
+ const api={render:renderDocument,prepare,mount,stop,exportRaster,raster,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
