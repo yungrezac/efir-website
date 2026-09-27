@@ -9,6 +9,7 @@ const siteRoot = path.resolve(__dirname, '..');
 const protectService = require('./protect-service.cjs').createProtectService();
 const homepageEnabled = require('./homepage-status.cjs').createHomepageStatus();
 const launcherLicense = require('./launcher-license.cjs').createLauncherLicense();
+const landingService = require('./landing-service.cjs').createLandingService();
 const maintenancePage = fs.readFileSync(path.join(siteRoot,'maintenance.html'));
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
@@ -19,7 +20,7 @@ const publicFiles = new Set([
   '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
   '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html',
-  '/violla', '/violla/', '/violla.html', '/violla.css'
+  '/violla', '/violla/', '/violla.html', '/violla.css', '/landing-page.css', '/landing-public.js'
   ,'/widget.html','/widget-render.js','/widget-public.js'
 ]);
 const mime = {
@@ -58,6 +59,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   try {
+    if (await landingService(request, response)) return;
     let pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replaceAll('\\', '/');
     if (/^\/widget\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(pathname)) pathname='/widget.html';
     if ((pathname==='/'||pathname==='/index.html') && !(await homepageEnabled())) {

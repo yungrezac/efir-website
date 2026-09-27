@@ -93,6 +93,27 @@
       return `<article class="app-row"><div class="app-meta"><strong>${esc(app.name)}</strong><small>${esc(app.id)} · ${status}</small></div><label class="toggle-label">Эксклюзив <input type="checkbox" data-kind="exclusive" data-app="${esc(app.id)}" ${exclusive ? 'checked' : ''}></label><label class="toggle-label access-toggle">Без подписки <input type="checkbox" data-kind="access" data-app="${esc(app.id)}" ${access ? 'checked' : ''}></label></article>`;
     }).join('');
     document.querySelectorAll('[data-kind]').forEach(input => input.addEventListener('change', () => setGrant(input)));
+    renderLandingAccess(user.id);
+  }
+  let landingSequence = 0;
+  async function renderLandingAccess(userId) {
+    const sequence = ++landingSequence;
+    document.getElementById('landing-access-row')?.remove();
+    const row = document.createElement('article'); row.id = 'landing-access-row'; row.className = 'app-row';
+    row.innerHTML = '<div class="app-meta"><strong>Личный лендинг</strong><small>Конструктор в лаунчере. При отзыве доступа страница скрывается, черновик сохраняется.</small></div><label class="toggle-label">Доступ <input type="checkbox" aria-label="Доступ к лендингу" disabled></label>';
+    $('apps').prepend(row);
+    const input = row.querySelector('input');
+    const {data,error} = await client.rpc('admin_landing_access',{p_user_id:userId});
+    if(sequence!==landingSequence||state.selectedId!==userId||!row.isConnected)return;
+    if(error){row.querySelector('small').textContent='Не удалось проверить доступ к лендингу. Обновите данные.';return;}
+    input.checked=!!data;input.disabled=false;
+    input.addEventListener('change',async()=>{
+      input.disabled=true;const enabled=input.checked;
+      const {error}=await client.rpc('admin_set_landing_access',{p_user_id:userId,p_enabled:enabled});
+      if(error){input.checked=!enabled;toast('Не удалось сохранить доступ к лендингу',true);}
+      else toast(enabled?'Доступ к лендингу выдан':'Доступ к лендингу отозван');
+      input.disabled=false;
+    });
   }
   async function setGrant(input) {
     input.disabled = true;
