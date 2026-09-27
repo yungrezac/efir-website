@@ -114,6 +114,24 @@
       else toast(enabled?'Доступ к лендингу выдан':'Доступ к лендингу отозван');
       input.disabled=false;
     });
+    const assignment=document.createElement('div');assignment.className='landing-assignment';row.append(assignment);
+    assignment.textContent='Загрузка готовых лендингов…';
+    const {data:templates,error:templateError}=await client.rpc('admin_landing_templates');
+    if(sequence!==landingSequence||state.selectedId!==userId||!row.isConnected)return;
+    if(templateError){assignment.textContent='Не удалось загрузить готовые лендинги.';return;}
+    const current=templates.find(t=>t.user_id===userId);
+    if(current){assignment.innerHTML='<p>Привязан лендинг <a target="_blank" rel="noopener noreferrer" href="/'+esc(current.slug)+'">efirlive.pro/'+esc(current.slug)+'</a>. Фото и кнопки доступны пользователю в лаунчере.</p>';return;}
+    const available=templates.filter(t=>!t.claimed&&!t.user_id);
+    assignment.innerHTML='<label>Привязать готовый лендинг<select aria-label="Готовый лендинг"><option value="">Выберите страницу</option>'+available.map(t=>'<option value="'+esc(t.slug)+'">'+esc(t.nickname)+' — efirlive.pro/'+esc(t.slug)+'</option>').join('')+'</select></label><button type="button" disabled>Привязать пользователю</button><small>Перенесёт фото и все кнопки в его редактор и выдаст доступ. Уже созданный лендинг пользователя не заменяется.</small>';
+    const select=assignment.querySelector('select'),assign=assignment.querySelector('button');
+    select.onchange=()=>{assign.disabled=!select.value;};
+    assign.onclick=async()=>{
+      assign.disabled=true;select.disabled=true;
+      const {error}=await client.rpc('admin_assign_landing',{p_user_id:userId,p_slug:select.value});
+      if(error){toast(error.message.includes('USER_HAS_LANDING')?'У пользователя уже есть лендинг. Его данные сохранены.':error.message.includes('LANDING_ALREADY_ASSIGNED')?'Эта страница уже привязана к другому пользователю.':'Не удалось привязать лендинг.',true);assign.disabled=false;select.disabled=false;return;}
+      toast('Лендинг привязан. Он уже доступен пользователю.');
+      if(state.selectedId===userId)renderLandingAccess(userId);
+    };
   }
   async function setGrant(input) {
     input.disabled = true;
