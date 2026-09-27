@@ -20,7 +20,7 @@ const publicFiles = new Set([
   '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
   '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html',
-  '/violla', '/violla/', '/violla.html', '/violla.css', '/landing-page.css', '/landing-public.js'
+  '/violla', '/violla/', '/violla.html', '/violla.css', '/landing-page.css', '/landing-public.js', '/landing-layout.js'
   ,'/widget.html','/widget-render.js','/widget-public.js'
 ]);
 const mime = {
@@ -108,6 +108,8 @@ const server = http.createServer(async (request, response) => {
       'X-Content-Type-Options': 'nosniff'
     };
     const publicPath = realRelative.split(path.sep).join('/');
+    // Public cutout portraits are also analysed by the launcher preview canvas.
+    if (/^assets\/creators\/(astral|darisha|sinabon|violla)\.png$/.test(publicPath)) headers['Access-Control-Allow-Origin'] = '*';
     if (/^(?:artifacts|scripts|downloads)\//i.test(publicPath)
       || /^(?:README\.md|SEO\.md|package(?:-lock)?\.json|release\.json)$/i.test(publicPath)
       || /\.(?:exe|zip)$/i.test(publicPath)) {
