@@ -18,7 +18,8 @@ const publicFiles = new Set([
   '/vladosikpypsik', '/vladosikpypsik/', '/admin.css', '/admin.js', '/analytics.js', '/analytics.css', '/site-settings.js',
   '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
-  '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html'
+  '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html',
+  '/violla', '/violla/', '/violla.html', '/violla.css'
   ,'/widget.html','/widget-render.js','/widget-public.js'
 ]);
 const mime = {
@@ -82,7 +83,7 @@ const server = http.createServer(async (request, response) => {
     if (!publicFiles.has(pathname) && !pathname.startsWith('/assets/') && !pathname.startsWith('/downloads/')) {
       return fail(404, 'Not found');
     }
-    const pageRoutes = { '/sinabon': '/sinabon.html', '/astral': '/astral.html', '/darisha': '/darisha.html', '/vladosikpypsik': '/admin.html', '/protect': '/protect.html' };
+    const pageRoutes = { '/sinabon': '/sinabon.html', '/astral': '/astral.html', '/darisha': '/darisha.html', '/violla': '/violla.html', '/vladosikpypsik': '/admin.html', '/protect': '/protect.html' };
     const resolvedPathname = pageRoutes[pathname.replace(/\/$/, '')] || pathname;
     let file = path.resolve(siteRoot, `.${resolvedPathname}`);
     const relative = path.relative(siteRoot, file);

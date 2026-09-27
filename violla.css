@@ -1,0 +1,9 @@
+.creator-violla .portrait-stage{aspect-ratio:1/.86}
+.creator-violla .portrait-wrap{bottom:-75%;mask-image:linear-gradient(#000 57%,transparent 83%)}
+.creator-violla .portrait-wrap::after{mask-image:url(/assets/creators/violla.png)}
+.creator-violla .identity{top:22%;left:4%;width:30%}
+.creator-violla .portrait-brand{top:23%}
+.creator-violla .link-copy{min-width:0}
+.creator-violla .link-copy small{line-height:1.5}
+.creator-violla .wallet-address{overflow-wrap:anywhere;font-size:11px}
+@media(max-width:480px){.creator-violla .link-copy strong{font-size:14px}.creator-violla .link-copy small{font-size:11px}.creator-violla .wallet-address{font-size:10px}}
