@@ -32,7 +32,7 @@
  const icon=type=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+(paths[type]||paths.link)+'</svg>';
  function linkIcon(item){
   const kind=iconType(item),url=safeUrl(item.value);
-  if(kind!=='link'||item.type==='copy'||!url)return icon(kind);
+  if(!['link','donation','money'].includes(kind)||item.type==='copy'||!url)return icon(kind);
   const host=new URL(url).hostname;
   return '<span class="lp-site-icon" aria-hidden="true">'+icon('link')+'<img data-site-icon src="https://efirlive.pro/api/link-icon?host='+esc(encodeURIComponent(host))+'" alt="" decoding="async" referrerpolicy="no-referrer"></span>';
  }
