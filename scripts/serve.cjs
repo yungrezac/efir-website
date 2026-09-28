@@ -17,7 +17,7 @@ const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0
 const publicFiles = new Set([
   '/', '/index.html', '/styles.css', '/search-content.css', '/app.js',
   '/timer-preview.css', '/timer-preview.js', '/release.json', '/robots.txt', '/sitemap.xml',
-  '/vladosikpypsik', '/vladosikpypsik/', '/admin.css', '/admin.js', '/analytics.js', '/analytics.css', '/site-settings.js',
+  '/vladosikpypsik', '/vladosikpypsik/', '/admin.css', '/admin.js', '/admin-control.js', '/admin-control.css', '/admin-landing-preview.html', '/admin-landing-preview.js', '/landing-preview.css', '/landing-render.js', '/analytics.js', '/analytics.css', '/site-settings.js',
   '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
   '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html',

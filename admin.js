@@ -13,7 +13,11 @@
     overview: ['Обзор', 'Основные показатели за выбранный период.'],
     users: ['Пользователи', 'Управляйте эксклюзивами и доступом к приложениям без подписки.'],
     streams: ['Эфиры', 'Зрители, подарки и активность стримеров.'],
-    usage: ['Использование', 'Кто, какие приложения и сколько времени использует.']
+    usage: ['Использование', 'Кто, какие приложения и сколько времени использует.'],
+    landings:['Лендинги','Страницы пользователей, публикация и отключение.'],
+    apps:['Приложения','Каталог, описания, изображения и доступность приложений.'],
+    promos:['Промокоды','Создание, сроки действия и лимиты пробного доступа.'],
+    subscriptions:['Подписки','Просмотр сроков, выдача и отзыв дней доступа.']
   };
   function navigate(focus = false) {
     const key = location.hash.slice(1);
@@ -25,7 +29,8 @@
     $('page-title').textContent = pages[page][0];
     $('page-description').textContent = pages[page][1];
     $('users-page').hidden = page !== 'users';
-    $('analytics').hidden = page === 'users';
+    $('analytics').hidden = !['overview','streams','usage'].includes(page);
+    $('management').hidden = !['landings','apps','promos','subscriptions'].includes(page);
     ['overview', 'streams', 'usage'].forEach(key => $(key + '-page').hidden = key !== page);
     document.title = pages[page][0] + ' · EFIR ADMIN';
     if (focus && !$('admin-view').hidden) $('page-title').focus({ preventScroll: true });
