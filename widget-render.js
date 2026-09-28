@@ -124,6 +124,7 @@
    if(frames.some(frame=>!frameCache.has(JSON.stringify(frame))))return false;
   }
   stop(target);
+  if(doc?.kind==='slideshow')return mountSlideshow(target,doc,prefix);
   if(doc&&(raster(doc)||options.localOnly)&&doc.kind!=='ticker'&&doc.kind!=='slideshow'){
    const image=new Image();image.src=frameCache.get(JSON.stringify(doc))||raster(doc).url;image.alt='Виджет';image.style.cssText='width:100%;height:100%;object-fit:contain';target.replaceChildren(image);return true;
   }
@@ -282,12 +283,45 @@
   }
   return `<defs>${defs}</defs><g opacity="${v.opacity/100}" ${mask}><g ${filter}>${body}</g></g>`;
  }
+ const transitions={fade:'Растворение',left:'Сдвиг влево',up:'Сдвиг вверх',zoom:'Масштаб',none:'Без перехода'};
+ function slideshowTransition(value={}){
+  value=value&&typeof value==='object'?value:{};
+  return {effect:Object.hasOwn(transitions,value.effect)?value.effect:'fade',duration:clamp(value.duration,.1,2,.6)};
+ }
+ function slideshowTimeline(doc,count){
+  const step=clamp(doc.duration,2,120,8),transition=slideshowTransition(doc.transition),total=step*count;
+  const fade=transition.effect==='none'?0:Math.min(transition.duration,step/2);
+  return {step,total,fade,effect:transition.effect,offset:index=>((fade-index*step)%total+total)%total};
+ }
+ function slideshowAnimation(doc,count,prefix){
+  const timeline=slideshowTimeline(doc,count),{total,step,fade,effect}=timeline;
+  if(count<2)return {css:'',style:()=>''};
+  const name=prefix+'-transition',enter=effect==='left'?'translateX(100%)':effect==='up'?'translateY(100%)':effect==='zoom'?'scale(.88)':'none';
+  const leave=effect==='left'?'translateX(-100%)':effect==='up'?'translateY(-100%)':effect==='zoom'?'scale(1.12)':'none';
+  const css=fade?`@keyframes ${name}{0%{opacity:0;transform:${enter}}${fade/total*100}%,${step/total*100}%{opacity:1;transform:none}${(step+fade)/total*100}%,100%{opacity:0;transform:${leave}}}`:
+   `@keyframes ${name}{0%{opacity:1}${step/total*100}%,100%{opacity:0}}`;
+  return {css,style:index=>`opacity:${index===0?1:0};transform-box:view-box;transform-origin:50% 50%;animation:${name} ${total}s ${fade?'linear':'steps(1,end)'} -${timeline.offset(index)}s infinite;will-change:opacity,transform`};
+ }
+ async function mountSlideshow(target,doc,prefix){
+  const items=(doc.items||[]).slice(0,10);
+  if(!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{})))){target.innerHTML=renderDocument(doc,prefix);return false;}
+  prefix=String(prefix).replace(/[^a-zA-Z0-9_-]/g,'');
+  const state={};mounts.set(target,state);
+  const holder=root.document.createElement('div'),animation=slideshowAnimation(doc,items.length,prefix);
+  holder.dataset.compositorSlideshow='true';holder.setAttribute('role','img');holder.setAttribute('aria-label','Слайдшоу');
+  holder.style.cssText='position:relative;width:100%;height:100%;overflow:hidden;contain:layout paint';
+  holder.innerHTML=`<style>${animation.css}</style>`;
+  const images=items.map((item,i)=>{const image=new Image();image.src=frameCache.get(JSON.stringify(item.document||{}));image.alt='';image.draggable=false;image.dataset.slideshowFrame=String(i);image.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;'+animation.style(i);holder.append(image);return image;});
+  try{await Promise.all(images.map(image=>image.decode()));}catch{if(mounts.get(target)===state)target.innerHTML=renderDocument(doc,prefix);return false;}
+  if(mounts.get(target)!==state)return false;
+  target.replaceChildren(holder);return true;
+ }
  function renderDocument(doc={},prefix='scene',depth=0){
   prefix=String(prefix).replace(/[^a-zA-Z0-9_-]/g,'');if(depth>1)return '';
   if(doc.kind==='ticker'||doc.kind==='slideshow'){
    const items=(Array.isArray(doc.items)?doc.items:[]).slice(0,10),duration=clamp(doc.duration,2,120,8),gap=clamp(doc.gap,0,200,30),fx=effects(doc.effects);
    const frames=items.map((item,i)=>{const cached=frameCache.get(JSON.stringify(item.document||{}));return cached?`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><image data-cached-frame="true" href="${cached}" width="800" height="600"/></svg>`:renderDocument(item.document||{},prefix+'-'+i,depth+1)});let body='';
-   if(doc.kind==='slideshow')body=frames.map((frame,i)=>{const times=[0],values=[i===0?1:0];if(i>0){times.push(i/items.length);values.push(1)}if(i<items.length-1){times.push((i+1)/items.length);values.push(0)}times.push(1);values.push(i===0?1:0);return `<g opacity="${i===0?1:0}"><animate attributeName="opacity" values="${values.join(';')}" keyTimes="${times.join(';')}" dur="${duration*items.length}s" repeatCount="indefinite" calcMode="discrete"/>${frame}</g>`}).join('');
+   if(doc.kind==='slideshow'){const animation=slideshowAnimation(doc,items.length,prefix);body=`<style>${animation.css}</style>`+frames.map((frame,i)=>`<g data-slideshow-frame="${i}" style="${animation.style(i)}">${frame}</g>`).join('');}
    else if(items.length){
     const layout=tickerLayout(doc);
     // Define expensive artwork once. Two identical periods cover the viewport at every phase.
@@ -302,7 +336,7 @@
     body=`<defs>${symbols}</defs><style>@keyframes ${prefix}-ticker{from{transform:translateX(0)}to{transform:translateX(-${layout.distance}px)}}${poses}</style><g data-ticker-track="true" style="animation:${prefix}-ticker ${layout.seconds}s linear infinite${reverse};will-change:transform">${strip}</g>`;
    }
    const size=dimensions(doc);
-   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size.width} ${size.height}" overflow="hidden" role="img">${decorateComposition(body,size,fx,prefix)}</svg>`;
+   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size.width} ${size.height}" overflow="hidden" role="img">${doc.kind==='slideshow'?body:decorateComposition(body,size,fx,prefix)}</svg>`;
   }
   if(!Array.isArray(doc.elements)){const svg=legacyRender(doc);if(prefix==='scene')return svg;return svg.replace(/id="([^"]+)"/g,(_,id)=>`id="${prefix}-${id}"`).replace(/href="#([^"]+)"/g,(_,id)=>`href="#${prefix}-${id}"`).replace(/url\(#([^)]+)\)/g,(_,id)=>`url(#${prefix}-${id})`);}
   let defs='';const body=doc.elements.slice(0,40).map((value,i)=>{
@@ -331,5 +365,5 @@
   }).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><defs>${defs}</defs>${body}</svg>`;
  }
 
- const api={render:renderDocument,prepare,prepareLocal,mount,stop,exportRaster,raster,fonts,fontCategories,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
+ const api={render:renderDocument,prepare,prepareLocal,mount,stop,exportRaster,raster,fonts,fontCategories,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose,transitions,slideshowTransition,slideshowTimeline};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
