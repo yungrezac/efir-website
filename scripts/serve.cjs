@@ -50,7 +50,7 @@ const mime = {
 
 const server = http.createServer(async (request, response) => {
   const fail = (status, message, headers = {}) => {
-    response.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8', ...headers });
+    response.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
     response.end(request.method === 'HEAD' ? undefined : message);
   };
 
