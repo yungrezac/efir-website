@@ -22,11 +22,11 @@ function tintIcon(bytes){
   for(let x=0;x<w;x++){add(x);add((h-1)*w+x);}for(let y=0;y<h;y++){add(y*w);add(y*w+w-1);}
   for(let q=0;q<queue.length;q++){const p=queue[q];d[p*4+3]=0;if(p%w)add(p-1);if(p%w<w-1)add(p+1);if(p>=w)add(p-w);if(p<w*(h-1))add(p+w);}
  }
- let lo=255,hi=0,count=0;
+ let lo=255,hi=0,count=0,solid=0;
  const lum=i=>d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722;
- for(let i=0;i<d.length;i+=4)if(d[i+3]>32){const l=lum(i);lo=Math.min(lo,l);hi=Math.max(hi,l);count++;}
+ for(let i=0;i<d.length;i+=4)if(d[i+3]>32){count++;if(d[i+3]>240){const l=lum(i);lo=Math.min(lo,l);hi=Math.max(hi,l);solid++;}}
  if(!count)throw Error('Empty icon');
- for(let i=0;i<d.length;i+=4){const shade=hi-lo>30?.38+.62*(lum(i)-lo)/(hi-lo):1;d[i]=Math.round(213*shade);d[i+1]=Math.round(252*shade);d[i+2]=Math.round(107*shade);}
+ for(let i=0;i<d.length;i+=4){const shade=solid&&hi-lo>30?.38+.62*Math.max(0,Math.min(1,(lum(i)-lo)/(hi-lo))):1;d[i]=Math.round(213*shade);d[i+1]=Math.round(252*shade);d[i+2]=Math.round(107*shade);}
  return PNG.sync.write(png);
 }
 exports.validHost=validHost;exports.tintIcon=tintIcon;
