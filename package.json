@@ -12,6 +12,7 @@
     "prepare:railway": "node scripts/prepare-railway.cjs"
   },
   "dependencies": {
+    "pngjs": "7.0.0",
     "tiktok-live-connector": "2.4.4"
   }
 }

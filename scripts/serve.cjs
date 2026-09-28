@@ -10,6 +10,7 @@ const protectService = require('./protect-service.cjs').createProtectService();
 const homepageEnabled = require('./homepage-status.cjs').createHomepageStatus();
 const launcherLicense = require('./launcher-license.cjs').createLauncherLicense();
 const landingService = require('./landing-service.cjs').createLandingService();
+const linkIconService = require('./link-icon-service.cjs').createLinkIconService();
 const maintenancePage = fs.readFileSync(path.join(siteRoot,'maintenance.html'));
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
@@ -21,7 +22,7 @@ const publicFiles = new Set([
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
   '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html',
   '/violla', '/violla/', '/violla.html', '/violla.css', '/landing-page.css', '/landing-public.js', '/landing-layout.js'
-  ,'/widget.html','/widget-render.js','/widget-public.js'
+  ,'/widget.html','/widget-render.js','/widget-public.js','/landing-icons.css','/landing-icons.js'
 ]);
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -59,6 +60,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   try {
+    if (await linkIconService(request, response)) return;
     if (await landingService(request, response)) return;
     let pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replaceAll('\\', '/');
     if (/^\/widget\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(pathname)) pathname='/widget.html';
