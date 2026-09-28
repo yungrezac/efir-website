@@ -55,7 +55,6 @@
   try{return await job}catch(error){assetCache.delete(url);throw error}
  }
  async function prepareFrame(doc){
-  if(doc.animate&&!raster(doc))return false;
   const key=JSON.stringify(doc);if(frameCache.has(key))return true;if(frameJobs.has(key))return frameJobs.get(key);
   const job=(async()=>{
    const ready=raster(doc);
@@ -83,6 +82,10 @@
     image.removeAttribute('data-gift-fallback');
    }
    const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
+   // Keep legacy SVG motion, with fonts and images already embedded locally.
+   if(doc.animate){
+    try{const image=new Image();image.src=url;await image.decode();cacheFrame(key,url);return true}catch(error){URL.revokeObjectURL(url);throw error}
+   }
    try{
     const image=new Image();image.src=url;await image.decode();const canvas=root.document.createElement('canvas');canvas.width=1200;canvas.height=900;canvas.getContext('2d').drawImage(image,0,0);
     const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error('Frame encoding failed')),'image/png'));
@@ -99,6 +102,10 @@
   for(let i=0;i<items.length;i+=2){const results=await Promise.all(items.slice(i,i+2).map(item=>prepareFrame(item.document||{})));ready=results.every(Boolean)&&ready;}
   return ready;
  }
+ async function prepareLocal(doc={}){
+  if(!root.document)return false;
+  return ['ticker','slideshow'].includes(doc.kind)?prepare(doc):prepareFrame(doc);
+ }
  async function exportRaster(doc){
   const clean={...doc};delete clean.raster;
   if(clean.animate)clean.animate=false;
@@ -110,8 +117,13 @@
  const mounts=new WeakMap();
  function stop(target){const old=mounts.get(target);if(old){old.dispose?.();mounts.delete(target)}}
  async function mount(target,doc,prefix='playback',options={}){
+  // Public playback must never fall back to remote images after preparation.
+  if(options.localOnly&&doc){
+   const frames=['ticker','slideshow'].includes(doc.kind)?(doc.items||[]).slice(0,10).map(item=>item.document||{}):[doc];
+   if(frames.some(frame=>!frameCache.has(JSON.stringify(frame))))return false;
+  }
   stop(target);
-  if(raster(doc)&&doc.kind!=='ticker'&&doc.kind!=='slideshow'){
+  if(doc&&(raster(doc)||options.localOnly)&&doc.kind!=='ticker'&&doc.kind!=='slideshow'){
    const image=new Image();image.src=frameCache.get(JSON.stringify(doc))||raster(doc).url;image.alt='Виджет';image.style.cssText='width:100%;height:100%;object-fit:contain';target.replaceChildren(image);return true;
   }
   if(options.mode==='compatible'&&doc?.kind==='ticker')return mountCompatible(target,doc);
@@ -325,5 +337,5 @@
   }).join('');return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img"><defs>${defs}</defs>${body}</svg>`;
  }
 
- const api={render:renderDocument,prepare,mount,stop,exportRaster,raster,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
+ const api={render:renderDocument,prepare,prepareLocal,mount,stop,exportRaster,raster,fonts,outlines,layer,order,layerIds,element,scene,tickerLayout,dimensions,effects,effectPresets,tickerPose};root.IMMWIGET=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window==='undefined'?globalThis:window);
