@@ -1,4 +1,15 @@
 EfirLandingLayout.mount();
+// Preserve the creator code across the browser-to-launcher handoff.
+(() => {
+ const slug=location.pathname.split('/').filter(Boolean)[0];
+ if(!document.querySelector('.lp-hero')||!/^[a-z0-9][a-z0-9_-]{2,39}$/.test(slug||''))return;
+ for(const link of document.querySelectorAll('a[href]'))try{
+  const target=new URL(link.href,location.href);
+  if((target.origin===location.origin||target.origin==='https://efirlive.pro')&&['/','/index.html'].includes(target.pathname)){
+   target.searchParams.set('ref',slug);link.href=target.href;
+  }
+ }catch{ /* Unrelated link. */ }
+})();
 (() => {
  const slug=location.pathname.split('/').filter(Boolean)[0];
  if(!document.querySelector('.lp-hero')||!/^[a-z0-9][a-z0-9_-]{2,39}$/.test(slug||''))return;

@@ -17,7 +17,9 @@
     landings:['Лендинги','Страницы пользователей, публикация и отключение.'],
     apps:['Приложения','Каталог, описания, изображения и доступность приложений.'],
     promos:['Промокоды','Создание, сроки действия и лимиты пробного доступа.'],
-    subscriptions:['Подписки','Просмотр сроков, выдача и отзыв дней доступа.']
+    subscriptions:['Подписки','Просмотр сроков, выдача и отзыв дней доступа.'],
+    referrals:['Рефералы','Партнёры, оплаченные подписки, начисления и история выплат.'],
+    audit:['Журнал действий','История изменений доступов, подписок, лендингов и выплат.']
   };
   function navigate(focus = false) {
     const key = location.hash.slice(1);
@@ -31,6 +33,8 @@
     $('users-page').hidden = page !== 'users';
     $('analytics').hidden = !['overview','streams','usage'].includes(page);
     $('management').hidden = !['landings','apps','promos','subscriptions'].includes(page);
+    if ($('referrals')) $('referrals').hidden = page !== 'referrals';
+    if ($('admin-audit')) $('admin-audit').hidden = page !== 'audit';
     ['overview', 'streams', 'usage'].forEach(key => $(key + '-page').hidden = key !== page);
     document.title = pages[page][0] + ' · EFIR ADMIN';
     if (focus && !$('admin-view').hidden) $('page-title').focus({ preventScroll: true });
@@ -99,6 +103,7 @@
     }).join('');
     document.querySelectorAll('[data-kind]').forEach(input => input.addEventListener('change', () => setGrant(input)));
     renderLandingAccess(user.id);
+    window.dispatchEvent(new CustomEvent('efir-admin-user-selected',{detail:{id:user.id}}));
   }
   let landingSequence = 0;
   async function renderLandingAccess(userId) {

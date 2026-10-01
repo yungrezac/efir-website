@@ -8,8 +8,8 @@ function createLauncherLicense({fetchImpl = fetch, timeout = 15000} = {}) {
     if (!url.pathname.startsWith('/api/launcher/')) return false;
     const route = url.pathname.slice('/api/launcher'.length);
     const allowed = request.method === 'GET'
-      ? /^\/(health|v1\/subscription(?:\/quote|\/telegram|\/tribute\/offer)?)$/.test(route)
-      : request.method === 'POST' && /^\/v1\/(check-license|issue-launch-ticket|promos\/redeem|subscription\/(?:telegram\/(?:start|status|confirm)|tribute\/check|orders(?:\/[a-zA-Z0-9-]+\/(verify|cancel))?))$/.test(route);
+      ? /^\/(health|v1\/referrals\/status|v1\/subscription(?:\/quote|\/telegram|\/tribute\/offer)?)$/.test(route)
+      : request.method === 'POST' && /^\/v1\/(check-license|issue-launch-ticket|referrals\/claim|promos\/redeem|subscription\/(?:telegram\/(?:start|status|confirm)|tribute\/check|orders(?:\/[a-zA-Z0-9-]+\/(verify|cancel))?))$/.test(route);
     const send = (status, body) => {
       response.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
       response.end(body);

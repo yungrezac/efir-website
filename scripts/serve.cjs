@@ -15,6 +15,7 @@ const maintenancePage = fs.readFileSync(path.join(siteRoot,'maintenance.html'));
 const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 const publicFiles = new Set([
+  '/admin-referrals.js', '/admin-referrals.css', '/admin-workspace.js', '/admin-workspace.css', '/referral-entry.js',
   '/', '/index.html', '/styles.css', '/search-content.css', '/app.js',
   '/timer-preview.css', '/timer-preview.js', '/release.json', '/robots.txt', '/sitemap.xml',
   '/vladosikpypsik', '/vladosikpypsik/', '/admin.css', '/admin.js', '/admin-control.js', '/admin-control.css', '/admin-landing-preview.html', '/admin-landing-preview.js', '/landing-preview.css', '/landing-render.js', '/analytics.js', '/analytics.css', '/site-settings.js',
