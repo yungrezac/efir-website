@@ -57,42 +57,44 @@
   const section = document.createElement('section');
   section.className = 'section-shell';
   section.setAttribute('aria-labelledby', 'referral-entry-title');
-  section.style.cssText = 'position:relative;z-index:3;margin:24px auto;padding:24px;border:1px solid #baff683d;border-radius:24px;background:#181c16;scroll-margin-top:100px';
+  section.style.cssText = 'position:relative;z-index:3;margin:16px auto;padding:16px 20px;border:1px solid #baff683d;border-radius:18px;background:#181c16;display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center';
   const title = document.createElement('h2');
   title.id = 'referral-entry-title';
-  title.textContent = 'Ваш код автора';
-  title.style.cssText = 'font-size:24px;line-height:1.2;margin:0 0 12px';
+  title.textContent = 'Ваш промокод';
+  title.style.cssText = 'font-size:18px;line-height:1.2;margin:0';
   const text = document.createElement('p');
-  text.textContent = 'После установки и входа в EFIR подтвердите этот код в разделе «Код автора». Он добавит TIMER и IMMWIGET в каталог. Для запуска нужна подписка.';
-  text.style.cssText = 'max-width:780px;line-height:1.5;margin-bottom:16px';
+  text.textContent = 'Загружаем приложения…';
+  text.style.cssText = 'flex-basis:100%;font-size:14px;line-height:1.5;margin:0;color:#aab69e';
   const row = document.createElement('div');
   row.style.cssText = 'display:flex;flex-wrap:wrap;gap:12px;align-items:center';
   const value = document.createElement('input');
   value.value = code;
   value.readOnly = true;
-  value.setAttribute('aria-label', 'Код автора');
-  value.style.cssText = 'min-width:160px;max-width:100%;border:1px solid #697060;background:#101510;color:#c3ff77;border-radius:10px;padding:14px;font:600 18px monospace';
+  value.setAttribute('aria-label', 'Промокод');
+  value.style.cssText = 'width:150px;max-width:100%;border:1px solid #697060;background:#101510;color:#c3ff77;border-radius:10px;padding:9px 12px;font:600 16px monospace';
   value.onclick = () => value.select();
   const copy = document.createElement('button');
   copy.type = 'button';
   copy.className = 'button button-primary';
-  copy.textContent = 'Скопировать код';
-  const open = document.createElement('a');
-  open.className = 'button';
-  open.href = 'efir://referral?code=' + encodeURIComponent(code);
-  open.textContent = 'Открыть в EFIR';
+  copy.textContent = 'Скопировать';
+  copy.style.cssText = 'min-height:40px;min-width:0;width:auto;padding:9px 16px;font-size:14px';
   const status = document.createElement('p');
   status.setAttribute('role', 'status');
   status.setAttribute('aria-live', 'polite');
-  status.style.cssText = 'margin:12px 0 0;line-height:1.5';
-  status.textContent = '«Открыть в EFIR» работает после установки новой версии лаунчера. Код можно ввести вручную.';
+  status.style.cssText = 'flex-basis:100%;margin:0;font-size:14px;line-height:1.5';
+  status.hidden = true;
   copy.onclick = async () => {
-    try { await navigator.clipboard.writeText(code); status.textContent = 'Код скопирован. Вставьте его в EFIR → Код автора.'; }
-    catch { value.focus(); value.select(); status.textContent = 'Код выделен. Скопируйте его и вставьте в EFIR → Код автора.'; }
+    status.hidden = false;
+    try { await navigator.clipboard.writeText(code); status.textContent = 'Скопировано'; }
+    catch { value.focus(); value.select(); status.textContent = 'Нажмите Ctrl+C, чтобы скопировать.'; }
   };
-  row.append(value, copy, open);
-  section.append(title, text, row, status);
+  row.append(value, copy);
+  section.append(title, row, text, status);
   const main = document.querySelector('main');
   if (!main) return;
   main.prepend(section);
+  fetch('https://qpoyojxupblhjeqbvqfr.supabase.co/rest/v1/rpc/referral_code_info', {method:'POST',headers:{apikey:'sb_publishable_QxJKRVOdn07hduJkqcbciw_oUADNl-C','Content-Type':'application/json'},body:JSON.stringify({p_code:code})})
+    .then(response=>{if(!response.ok)throw Error('unavailable');return response.json();})
+    .then(info=>{text.textContent=info?(info.apps?.length?'В каталоге: '+info.apps.map(a=>a.name).join(', ')+'. Для запуска нужна подписка.':'Для этого промокода пока не выбраны приложения.'):'Промокод сейчас недоступен.';})
+    .catch(()=>{text.textContent='Список приложений появится при применении промокода в EFIR.';});
 })();

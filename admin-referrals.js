@@ -67,9 +67,9 @@
     const sequence = ++state.detailSequence, userId = state.selected;
     $('referral-detail').setAttribute('aria-busy','true');
     try {
-      const data = await rpc('admin_referral_detail',{p_user_id:userId});
+      const [data, appConfig] = await Promise.all([rpc('admin_referral_detail',{p_user_id:userId}),rpc('admin_referral_apps',{p_user_id:userId})]);
       if (sequence !== state.detailSequence || !window.efirAdminReady) return;
-      state.detail = data; state.dirty = false; renderDetail(data);
+      data.appConfig = appConfig; state.detail = data; state.dirty = false; renderDetail(data);
     } catch (error) {
       if (sequence === state.detailSequence) {
         $('referral-detail').innerHTML = `<p class="referral-message error">${esc(errorText(error))}</p><button class="ghost" id="referral-detail-retry">Повторить</button>`;
@@ -78,6 +78,7 @@
     } finally { if (sequence === state.detailSequence) $('referral-detail').removeAttribute('aria-busy'); }
   }
   function renderDetail(p) {
+    let appsDirty=false,conditionsDirty=false;
     const commissions = p.commissions || [], payouts = p.payouts || [], referrals = p.referrals || [];
     $('referral-detail').innerHTML = `<h2>${esc(p.name || p.email || 'Партнёр')}</h2><p class="referral-muted">${esc(p.email)}${p.slug ? ` · <a href="/${encodeURIComponent(p.slug)}" target="_blank" rel="noopener noreferrer">/${esc(p.slug)} ↗</a>` : ''}</p>
       <span class="control-badge ${p.active?'on':''}">${p.active?'Начисления включены':'Начисления приостановлены'}</span>
@@ -91,16 +92,28 @@
       <details><summary>Приглашённые пользователи</summary><p class="referral-muted">Последние 100 привязок. Привязка сохраняется при смене адреса лендинга; повторный код её не заменяет.</p>${table(['Пользователь','Код','Дата'],referrals.map(row=>`<tr><td>${esc(row.email || row.user_id)}<small>${esc(row.name || '')}</small></td><td>${esc(row.code)}</td><td>${esc(date(row.created_at))}</td></tr>`),'Никто ещё не активировал код.')}</details>`;
     $('referral-detail-refresh').onclick = () => { if (!state.busy && canDiscard()) {state.dirty=false; loadList();} };
     $('referral-payout').onclick = () => payoutDialog(p);
+    const appsForm=document.createElement('form');appsForm.className='referral-apps-form';
+    appsForm.innerHTML=`<h3>Приложения по промокоду</h3><p class="referral-muted">Выбранные приложения появятся в каталоге у всех, кто применил этот промокод. Для запуска нужна подписка. Личные доступы администратора сохраняются.</p><fieldset class="control-fields">${(p.appConfig?.options||[]).map(a=>`<label class="control-check"><input type="checkbox" name="app" value="${esc(a.id)}" ${(p.appConfig.selected||[]).includes(a.id)?'checked':''}> ${esc(a.name)}${a.disabled?' · запуск отключён':!a.available?' · скрыто в каталоге':''}</label>`).join('')||'<p>В каталоге пока нет приложений.</p>'}</fieldset><div class="referral-actions"><button class="ghost">Сохранить приложения</button></div><p class="referral-message" role="status"></p>`;
+    $('referral-detail').querySelector('details').before(appsForm);
+    appsForm.onchange=()=>{appsDirty=true;state.dirty=true;};
+    appsForm.onsubmit=async event=>{
+      event.preventDefault();if(state.busy)return;state.busy=true;
+      const ids=[...appsForm.querySelectorAll('input:checked')].map(el=>el.value),feedback=appsForm.querySelector('[role=status]');
+      appsForm.querySelector('fieldset').disabled=true;appsForm.querySelector('button').disabled=true;
+      try{const saved=await rpc('admin_referral_apps_save',{p_user_id:p.user_id,p_apps:ids,p_revision:p.appConfig.revision});p.appConfig=saved;p.revision=saved.revision;appsDirty=false;state.dirty=conditionsDirty;if(!conditionsDirty)await loadList();else feedback.textContent='Приложения сохранены. Условия партнёра ещё не сохранены.';message('referral-status','Приложения по промокоду сохранены.');}
+      catch(error){feedback.textContent=errorText(error);feedback.classList.add('error');}
+      finally{state.busy=false;if(appsForm.isConnected){appsForm.querySelector('fieldset').disabled=false;appsForm.querySelector('button').disabled=false;}}
+    };
     const form = $('referral-partner-form');
-    form.addEventListener('input',()=>{state.dirty=true;$('referral-dirty').textContent='Есть несохранённые изменения';});
+    form.addEventListener('input',()=>{conditionsDirty=true;state.dirty=true;$('referral-dirty').textContent='Есть несохранённые изменения';});
     form.addEventListener('submit', async event => {
       event.preventDefault(); if (state.busy) return;
       const rate = form.elements.rate.value;
       state.busy=true; form.querySelector('fieldset').disabled=true; form.querySelector('button').disabled=true;
       message('referral-partner-message','Сохраняем…');
       try {
-        await rpc('admin_referral_save',{p_user_id:p.user_id,p_enabled:form.elements.enabled.checked,p_rate_bps:rate===''?null:Math.round(Number(rate)*100),p_note:form.elements.note.value,p_revision:p.revision});
-        state.dirty=false; await loadList(); message('referral-partner-message','Условия сохранены.');
+        const saved=await rpc('admin_referral_save',{p_user_id:p.user_id,p_enabled:form.elements.enabled.checked,p_rate_bps:rate===''?null:Math.round(Number(rate)*100),p_note:form.elements.note.value,p_revision:p.revision});
+        p.revision=saved.revision;p.appConfig.revision=saved.revision;conditionsDirty=false;state.dirty=appsDirty;if(!appsDirty)await loadList();else $('referral-dirty').textContent='';message('referral-partner-message','Условия сохранены.');
       } catch(error) {message('referral-partner-message',errorText(error),true);}
       finally {state.busy=false;if(form.isConnected){form.querySelector('fieldset').disabled=false;form.querySelector('button').disabled=false;}}
     });
