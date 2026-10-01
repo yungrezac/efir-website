@@ -76,10 +76,12 @@
   if(assetCache.size>=50)assetCache.clear();assetCache.set(url,job);
   try{return await job}catch(error){assetCache.delete(url);throw error}
  }
- async function prepareFrame(doc){
-  const key=JSON.stringify(doc);if(frameCache.has(key))return true;if(frameJobs.has(key))return frameJobs.get(key);
+ function originalGiftScene(doc){return scene(doc).elements.some(e=>!e.hidden&&e.type==='gift'&&safeImage(e.gift?.icon||e.src));}
+ async function prepareFrame(doc,flatten=false){
+  // Export snapshots and original artwork must never share a cache entry.
+  const key=(flatten?'export:':'')+JSON.stringify(doc);if(frameCache.has(key))return true;if(frameJobs.has(key))return frameJobs.get(key);
   const job=(async()=>{
-   const ready=raster(doc);
+   const originals=!flatten&&originalGiftScene(doc),ready=originals?null:raster(doc);
    if(ready){
     const response=await fetch(ready.url,{signal:AbortSignal.timeout(60000)});if(!response.ok)throw Error('WebP unavailable');
     const url=URL.createObjectURL(await response.blob());
@@ -104,8 +106,9 @@
     image.removeAttribute('data-gift-fallback');
    }
    const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
-   // Keep legacy SVG motion, with fonts and images already embedded locally.
-   if(doc.animate){
+   // Preserve the source gift bytes and vector layout instead of baking small
+   // gifts into a 1200x900 scene. The prepared SVG has no remote dependencies.
+   if(doc.animate||originals){
     try{const image=new Image();image.src=url;await deadline(image.decode());cacheFrame(key,url);return true}catch(error){URL.revokeObjectURL(url);throw error}
    }
    try{
@@ -131,8 +134,8 @@
  async function exportRaster(doc){
   const clean={...doc};delete clean.raster;
   if(clean.animate)clean.animate=false;
-  if(!await prepareFrame(clean))throw Error('Не удалось подготовить изображение: проверьте загрузку подарков и шрифтов.');
-  const blob=await (await fetch(frameCache.get(JSON.stringify(clean)))).blob();
+  if(!await prepareFrame(clean,true))throw Error('Не удалось подготовить изображение: проверьте загрузку подарков и шрифтов.');
+  const blob=await (await fetch(frameCache.get('export:'+JSON.stringify(clean)))).blob();
   const png=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob)});
   return {png,bounds:horizontalBounds(clean)};
  }
