@@ -29,6 +29,31 @@
     }
   } catch { /* The code still works with storage disabled. */ }
   if (!code) return;
+  function trackArrival() {
+    let session;
+    try { session = sessionStorage.getItem('efir-landing-session'); if (!/^[a-f0-9-]{36}$/.test(session || '')) { session = crypto.randomUUID(); sessionStorage.setItem('efir-landing-session', session); } }
+    catch { session = crypto.randomUUID(); }
+    // Retry the same event identity: the database deduplicates successful deliveries.
+    const body = JSON.stringify({ p_slug: code, p_session: session });
+    async function send(attempt = 0) {
+      try {
+        const response = await fetch('https://qpoyojxupblhjeqbvqfr.supabase.co/rest/v1/rpc/landing_referral_track', { method: 'POST', keepalive: true, headers: { apikey: 'sb_publishable_QxJKRVOdn07hduJkqcbciw_oUADNl-C', 'Content-Type': 'application/json' }, body });
+        if (!response.ok) throw new Error('Referral tracking HTTP ' + response.status);
+      } catch (error) {
+        if (attempt < 2) setTimeout(() => send(attempt + 1), 1500 * (attempt + 1));
+        else console.warn('Не удалось учесть переход по коду автора:', error.message);
+      }
+    }
+    send();
+  }
+  if (fromLink) {
+    if (document.visibilityState !== 'hidden') trackArrival();
+    else document.addEventListener('visibilitychange', function visible() {
+      if (document.visibilityState !== 'hidden') { trackArrival(); document.removeEventListener('visibilitychange', visible); }
+    });
+  }
+  // A closed homepage still preserves the code and records the arrival.
+  if (document.currentScript?.hasAttribute('data-tracking-only')) return;
   const section = document.createElement('section');
   section.className = 'section-shell';
   section.setAttribute('aria-labelledby', 'referral-entry-title');
@@ -70,16 +95,4 @@
   const main = document.querySelector('main');
   if (!main) return;
   main.prepend(section);
-  function trackArrival() {
-    let session;
-    try { session = sessionStorage.getItem('efir-landing-session'); if (!/^[a-f0-9-]{36}$/.test(session || '')) { session = crypto.randomUUID(); sessionStorage.setItem('efir-landing-session', session); } }
-    catch { session = crypto.randomUUID(); }
-    fetch('https://qpoyojxupblhjeqbvqfr.supabase.co/rest/v1/rpc/landing_referral_track', { method: 'POST', keepalive: true, headers: { apikey: 'sb_publishable_QxJKRVOdn07hduJkqcbciw_oUADNl-C', 'Content-Type': 'application/json' }, body: JSON.stringify({ p_slug: code, p_session: session }) }).catch(() => {});
-  }
-  if (fromLink) {
-    if (document.visibilityState !== 'hidden') trackArrival();
-    else document.addEventListener('visibilitychange', function visible() {
-      if (document.visibilityState !== 'hidden') { trackArrival(); document.removeEventListener('visibilitychange', visible); }
-    });
-  }
 })();
