@@ -17,7 +17,7 @@
    target.dataset.playback='loading';
    // Decode every asset before playback. Retry only unfinished loading, never poll.
    if(!await IMMWIGET.prepareLocal(snapshot))throw Error('Assets unavailable');
-   await IMMWIGET.mount(target,snapshot,'playback',{mode,localOnly:true});
+   if(!await IMMWIGET.mount(target,snapshot,'playback',{mode,localOnly:true}))throw Error('Playback unavailable');
    target.dataset.playback='ready';
   }catch{
    target.dataset.playback='retrying';

@@ -43,6 +43,27 @@
  }
  const legacyRender=render;
  const frameCache=new Map(),frameJobs=new Map(),assetCache=new Map();
+ let fontStylesJob=null,fontTextJob=null;
+ function deadline(promise,ms=12000){
+  let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Preparation timed out')),ms)})]).finally(()=>clearTimeout(timer));
+ }
+ async function fontStyles(){
+  const link=root.document.querySelector('link[href$="fonts.css"],link[data-widget-fonts]');
+  if(!link)return null;
+  // Published WebP scenes never need the large font catalogue on the critical path.
+  if(!link.hasAttribute('href')){
+   if(!fontStylesJob)fontStylesJob=deadline(new Promise((resolve,reject)=>{
+    link.onload=resolve;link.onerror=()=>reject(Error('Fonts unavailable'));
+    link.rel='stylesheet';link.href=link.dataset.widgetFonts;
+   }),60000).catch(error=>{fontStylesJob=null;link.removeAttribute('href');throw error;});
+   await fontStylesJob;
+  }else if(fontStylesJob)await fontStylesJob;
+  return link;
+ }
+ function fontText(stylesheet){
+  if(!fontTextJob)fontTextJob=(async()=>{const response=await fetch(stylesheet.href,{signal:AbortSignal.timeout(60000)});if(!response.ok)throw Error('Fonts unavailable');return response.text();})().catch(error=>{fontTextJob=null;throw error;});
+  return fontTextJob;
+ }
  function raster(doc){
   const v=doc?.raster,b=v?.bounds;
   return v?.version===1&&v.width===1200&&v.height===900&&/^https:\/\/qpoyojxupblhjeqbvqfr\.supabase\.co\/storage\/v1\/object\/public\/immwiget-renders\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f]{64}\.webp$/.test(v.url||'')&&b&&Number.isFinite(b.x)&&Number.isFinite(b.width)&&b.x>=0&&b.width>=1&&b.x+b.width<=800?v:null;
@@ -51,7 +72,7 @@
  async function embeddedAsset(url){
   if(url.startsWith('data:'))return url;
   if(assetCache.has(url))return assetCache.get(url);
-  const job=(async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(12000)});if(!response.ok)throw Error('Asset '+response.status);const blob=await response.blob();return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob)});})();
+  const job=(async()=>{const response=await fetch(url,{signal:AbortSignal.timeout(60000)});if(!response.ok)throw Error('Asset '+response.status);const blob=await response.blob();return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob)});})();
   if(assetCache.size>=50)assetCache.clear();assetCache.set(url,job);
   try{return await job}catch(error){assetCache.delete(url);throw error}
  }
@@ -60,17 +81,17 @@
   const job=(async()=>{
    const ready=raster(doc);
    if(ready){
-    const response=await fetch(ready.url,{signal:AbortSignal.timeout(12000)});if(!response.ok)throw Error('WebP unavailable');
+    const response=await fetch(ready.url,{signal:AbortSignal.timeout(60000)});if(!response.ok)throw Error('WebP unavailable');
     const url=URL.createObjectURL(await response.blob());
-    try{const image=new Image();image.src=url;await image.decode();if(image.naturalWidth!==1200||image.naturalHeight!==900)throw Error('WebP dimensions');cacheFrame(key,url)}catch(error){URL.revokeObjectURL(url);throw error}
+    try{const image=new Image();image.src=url;await deadline(image.decode());if(image.naturalWidth!==1200||image.naturalHeight!==900)throw Error('WebP dimensions');cacheFrame(key,url)}catch(error){URL.revokeObjectURL(url);throw error}
     return true;
    }
    const used=[...new Set(scene(doc).elements.filter(e=>e.type==='text').map(e=>e.font||'Arial Black'))];
-   await Promise.all(used.map(font=>root.document.fonts.load(`80px "${font}"`)));
-   let fontCSS='';const stylesheet=root.document.querySelector('link[href$="fonts.css"]');
+   const stylesheet=used.some(font=>font!=='Arial Black')?await fontStyles():null;
+   await deadline(Promise.all(used.map(font=>root.document.fonts.load(`80px "${font}"`))),60000);
+   let fontCSS='';
    if(stylesheet&&used.some(font=>font!=='Arial Black')){
-    const response=await fetch(stylesheet.href);if(!response.ok)throw Error('Fonts unavailable');
-    for(const rule of (await response.text()).match(/@font-face\{[^}]+\}/g)||[]){
+    for(const rule of (await fontText(stylesheet)).match(/@font-face\{[^}]+\}/g)||[]){
      const family=rule.match(/font-family:'([^']+)'/)?.[1],file=rule.match(/url\('([^']+)'\)/)?.[1];
      if(used.includes(family)&&file)fontCSS+=rule.replace(file,await embeddedAsset(new URL(file,stylesheet.href).href));
     }
@@ -85,10 +106,10 @@
    const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
    // Keep legacy SVG motion, with fonts and images already embedded locally.
    if(doc.animate){
-    try{const image=new Image();image.src=url;await image.decode();cacheFrame(key,url);return true}catch(error){URL.revokeObjectURL(url);throw error}
+    try{const image=new Image();image.src=url;await deadline(image.decode());cacheFrame(key,url);return true}catch(error){URL.revokeObjectURL(url);throw error}
    }
    try{
-    const image=new Image();image.src=url;await image.decode();const canvas=root.document.createElement('canvas');canvas.width=1200;canvas.height=900;canvas.getContext('2d').drawImage(image,0,0);
+    const image=new Image();image.src=url;await deadline(image.decode());const canvas=root.document.createElement('canvas');canvas.width=1200;canvas.height=900;canvas.getContext('2d').drawImage(image,0,0);
     const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error('Frame encoding failed')),'image/png'));
     cacheFrame(key,URL.createObjectURL(blob));
    }finally{URL.revokeObjectURL(url)}
@@ -117,6 +138,7 @@
  }
  const mounts=new WeakMap();
  function stop(target){const old=mounts.get(target);if(old){old.dispose?.();mounts.delete(target)}}
+ function fallback(target,doc,prefix,options){if(options?.localOnly)target.replaceChildren();else target.innerHTML=doc?renderDocument(doc,prefix):'';return false;}
  async function mount(target,doc,prefix='playback',options={}){
   // Public playback must never fall back to remote images after preparation.
   if(options.localOnly&&doc){
@@ -124,14 +146,19 @@
    if(frames.some(frame=>!frameCache.has(JSON.stringify(frame))))return false;
   }
   stop(target);
-  if(doc?.kind==='slideshow')return mountSlideshow(target,doc,prefix);
+  if(options.localOnly&&['ticker','slideshow'].includes(doc?.kind)&&!doc.items?.length){target.replaceChildren();return true;}
+  if(doc?.kind==='slideshow')return mountSlideshow(target,doc,prefix,options);
   if(doc&&(raster(doc)||options.localOnly)&&doc.kind!=='ticker'&&doc.kind!=='slideshow'){
-   const image=new Image();image.src=frameCache.get(JSON.stringify(doc))||raster(doc).url;image.alt='Виджет';image.style.cssText='width:100%;height:100%;object-fit:contain';target.replaceChildren(image);return true;
+   const state={};mounts.set(target,state);
+   const image=new Image();image.src=frameCache.get(JSON.stringify(doc))||raster(doc).url;image.alt='Виджет';image.style.cssText='width:100%;height:100%;object-fit:contain';
+   try{await deadline(image.decode());}catch{if(mounts.get(target)===state)fallback(target,doc,prefix,options);return false;}
+   if(mounts.get(target)!==state)return false;
+   target.replaceChildren(image);return true;
   }
-  if(options.mode==='compatible'&&doc?.kind==='ticker')return mountCompatible(target,doc);
+  if(options.mode==='compatible'&&doc?.kind==='ticker')return mountCompatible(target,doc,options);
   const fx=effects(doc?.effects),items=doc?.items||[];
   // SVG remains the fallback for source errors and the alpha-preserving shading filter.
-  if(doc?.kind!=='ticker'||!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{})))){target.innerHTML=doc?renderDocument(doc,prefix):'';return false;}
+  if(doc?.kind!=='ticker'||!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{}))))return fallback(target,doc,prefix,options);
   prefix=String(prefix).replace(/[^a-zA-Z0-9_-]/g,'');
   const layout=tickerLayout(doc),reverse=fx.direction==='right'?' reverse':'',holder=root.document.createElement('div');
   holder.dataset.compositorTicker='true';holder.setAttribute('role','img');holder.setAttribute('aria-label','Бегущая строка');
@@ -151,7 +178,7 @@
   holder.innerHTML=`<style>${css}</style><div data-ticker-viewport style="position:absolute;left:50%;top:50%;width:${layout.width}px;height:600px;transform-origin:50% 50%;overflow:hidden;opacity:${fx.opacity/100};mask-image:${mask};-webkit-mask-image:${mask};mask-repeat:no-repeat;-webkit-mask-repeat:no-repeat"><div style="width:100%;height:100%;filter:${filter}"><div data-ticker-track style="position:relative;width:${layout.distance*2}px;height:600px;animation:${prefix}-slide ${layout.seconds}s linear infinite${reverse};will-change:transform">${parts}</div></div></div>`;
   const state={};mounts.set(target,state);
   // Decode before attaching animated elements, so the first loop has no decode stalls.
-  try{await Promise.all(Array.from(holder.querySelectorAll('img'),img=>img.decode()))}catch{if(mounts.get(target)===state){mounts.delete(target);target.innerHTML=renderDocument(doc,prefix)}return false}
+  try{await deadline(Promise.all(Array.from(holder.querySelectorAll('img'),img=>img.decode())))}catch{if(mounts.get(target)===state){mounts.delete(target);fallback(target,doc,prefix,options)}return false}
   if(mounts.get(target)!==state)return false;
   target.replaceChildren(holder);
   const viewport=holder.querySelector('[data-ticker-viewport]');
@@ -161,22 +188,22 @@
  }
  // A bounded canvas avoids a very wide composited strip in embedded browsers.
  // Time determines position; missed frames never accumulate timer drift.
- async function mountCompatible(target,doc){
+ async function mountCompatible(target,doc,options){
   const items=(doc.items||[]).slice(0,10),state={};mounts.set(target,state);
-  if(!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{})))){target.innerHTML=renderDocument(doc);return false;}
+  if(!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{}))))return fallback(target,doc,'playback',options);
   let images;
-  try{images=await Promise.all(items.map(async item=>{const image=new Image();image.src=frameCache.get(JSON.stringify(item.document||{}));await image.decode();return image}))}catch{if(mounts.get(target)===state)target.innerHTML=renderDocument(doc);return false;}
+  try{images=await deadline(Promise.all(items.map(async item=>{const image=new Image();image.src=frameCache.get(JSON.stringify(item.document||{}));await image.decode();return image})))}catch{if(mounts.get(target)===state)fallback(target,doc,'playback',options);return false;}
   if(mounts.get(target)!==state)return false;
   const layout=tickerLayout(doc),fx=effects(doc.effects),canvas=root.document.createElement('canvas');
   canvas.dataset.compatibleTicker='true';canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Бегущая строка');
   canvas.style.cssText='display:block;width:100%;height:100%;object-fit:contain';
   const context=canvas.getContext('2d',{alpha:true});
-  if(!context){target.innerHTML=renderDocument(doc);return false;}
-  const started=performance.now();let raf=0,scale=1,last=-Infinity,fade=null,sprites=images;
+  if(!context)return fallback(target,doc,'playback',options);
+  const started=performance.now();let raf=null,scale=1,previous=null,fade=null,sprites=images,quality=1,cost=0,interval=1000/60,nextQualityCheck=started+2000;
   function draw(now){
    context.setTransform(1,0,0,1,0,0);context.clearRect(0,0,canvas.width,canvas.height);
    context.save();context.scale(scale,scale);context.globalAlpha=fx.opacity/100;
-   const fraction=((now-started)*.65/(layout.seconds*1000))%1;
+   const fraction=(Math.max(0,now-started)%(layout.seconds*1000))/(layout.seconds*1000);
    const offset=(fx.direction==='right'?1-fraction:fraction)*layout.distance;
    for(let i=0;i<layout.positions.length;i++){
     const crop=layout.crops[i%items.length],x=layout.positions[i]-offset;
@@ -187,20 +214,39 @@
    context.restore();
    if(fade){context.globalCompositeOperation='destination-in';context.fillStyle=fade;context.fillRect(0,0,canvas.width,canvas.height);context.globalCompositeOperation='source-over';}
   }
-  function fit(){
+  function fit(now=performance.now(),redraw=true){
    const ratio=Math.min(root.devicePixelRatio||1,1.5);
-   scale=Math.max(.001,Math.min(target.clientWidth*ratio/layout.width,target.clientHeight*ratio/600,1920/layout.width,1080/600));
-   canvas.width=Math.max(1,Math.round(layout.width*scale));canvas.height=Math.max(1,Math.round(600*scale));
+   const fitted=Math.max(.001,Math.min(target.clientWidth*ratio/layout.width,target.clientHeight*ratio/600,1920/layout.width,1080/600)*quality);
+   const width=Math.max(1,Math.round(layout.width*fitted)),height=Math.max(1,Math.round(600*fitted));
+   if(canvas.width===width&&canvas.height===height&&sprites!==images)return;
+   scale=fitted;canvas.width=width;canvas.height=height;canvas.dataset.renderQuality=quality.toFixed(2);
    context.imageSmoothingEnabled=true;context.imageSmoothingQuality='high';
    // Resample once per resize instead of scaling full-size source artwork every frame.
    sprites=images.map(image=>{const sprite=root.document.createElement('canvas');sprite.width=Math.max(1,Math.round(800*scale));sprite.height=Math.max(1,Math.round(600*scale));const ctx=sprite.getContext('2d');ctx.imageSmoothingQuality='high';ctx.drawImage(image,0,0,sprite.width,sprite.height);return sprite});
    fade=null;if(fx.fade){fade=context.createLinearGradient(0,0,canvas.width,0);fade.addColorStop(0,`rgba(0,0,0,${1-fx.fade/100})`);fade.addColorStop(fx.edgeWidth/100,'#000');fade.addColorStop(1-fx.edgeWidth/100,'#000');fade.addColorStop(1,`rgba(0,0,0,${1-fx.fade/100})`);}
-   draw(performance.now());
+   if(redraw)draw(now);
   }
-  function frame(now){if(now+.5>=last){last=started+(Math.floor((now-started+.5)/(1000/30))+1)*(1000/30);draw(now)}raf=requestAnimationFrame(frame)}
+  function frame(now){
+   if(mounts.get(target)!==state)return;
+   // The browser/source owns cadence: one drawing per delivered frame at any Hz.
+   // Resolve directly from elapsed time, without queues of catch-up frames.
+   const delta=previous===null?0:now-previous;previous=now;
+   if(delta>=3&&delta<100)interval+=.1*(delta-interval);
+   if(now>=nextQualityCheck){
+    const budget=Math.max(2,interval*.55);let next=quality;
+    if(cost>budget)next=Math.max(.5,quality*.85);
+    else if(cost<budget*.35)next=Math.min(1,quality+.1);
+    nextQualityCheck=now+3000;
+    // Relieve sustained GPU/CPU pressure through resolution, never playback speed.
+    if(next!==quality){quality=next;fit(now,false);}
+   }
+   const before=performance.now();draw(now);cost+=.1*(Math.max(0,performance.now()-before)-cost);
+   raf=requestAnimationFrame(frame);
+  }
   target.replaceChildren(canvas);fit();raf=requestAnimationFrame(frame);
-  let observer;if(root.ResizeObserver){observer=new ResizeObserver(fit);observer.observe(target)}else root.addEventListener('resize',fit);
-  state.dispose=()=>{cancelAnimationFrame(raf);observer?.disconnect();root.removeEventListener('resize',fit)};
+  const resized=()=>fit();
+  let observer;if(root.ResizeObserver){observer=new ResizeObserver(resized);observer.observe(target)}else root.addEventListener('resize',resized);
+  state.dispose=()=>{if(raf!==null)cancelAnimationFrame(raf);observer?.disconnect();root.removeEventListener('resize',resized)};
   return true;
  }
  const safeImage=url=>/^https:\/\//i.test(url||'')||/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(url||'')?String(url):'';
@@ -302,9 +348,9 @@
    `@keyframes ${name}{0%{opacity:1}${step/total*100}%,100%{opacity:0}}`;
   return {css,style:index=>`opacity:${index===0?1:0};transform-box:view-box;transform-origin:50% 50%;animation:${name} ${total}s ${fade?'linear':'steps(1,end)'} -${timeline.offset(index)}s infinite;will-change:opacity,transform`};
  }
- async function mountSlideshow(target,doc,prefix){
+ async function mountSlideshow(target,doc,prefix,options){
   const items=(doc.items||[]).slice(0,10);
-  if(!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{})))){target.innerHTML=renderDocument(doc,prefix);return false;}
+  if(!items.length||items.some(item=>!frameCache.has(JSON.stringify(item.document||{}))))return fallback(target,doc,prefix,options);
   prefix=String(prefix).replace(/[^a-zA-Z0-9_-]/g,'');
   const state={};mounts.set(target,state);
   const holder=root.document.createElement('div'),animation=slideshowAnimation(doc,items.length,prefix);
@@ -312,7 +358,7 @@
   holder.style.cssText='position:relative;width:100%;height:100%;overflow:hidden;contain:layout paint';
   holder.innerHTML=`<style>${animation.css}</style>`;
   const images=items.map((item,i)=>{const image=new Image();image.src=frameCache.get(JSON.stringify(item.document||{}));image.alt='';image.draggable=false;image.dataset.slideshowFrame=String(i);image.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:contain;'+animation.style(i);holder.append(image);return image;});
-  try{await Promise.all(images.map(image=>image.decode()));}catch{if(mounts.get(target)===state)target.innerHTML=renderDocument(doc,prefix);return false;}
+  try{await deadline(Promise.all(images.map(image=>image.decode())));}catch{if(mounts.get(target)===state)fallback(target,doc,prefix,options);return false;}
   if(mounts.get(target)!==state)return false;
   target.replaceChildren(holder);return true;
  }
