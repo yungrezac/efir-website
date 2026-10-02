@@ -9,13 +9,16 @@ function createLauncherLicense({fetchImpl = fetch, timeout = 15000} = {}) {
     const route = url.pathname.slice('/api/launcher'.length);
     const allowed = request.method === 'GET'
       ? /^\/(health|v1\/referrals\/status|v1\/subscription(?:\/quote|\/telegram|\/tribute\/offer)?)$/.test(route)
-      : request.method === 'POST' && /^\/v1\/(check-license|issue-launch-ticket|referrals\/claim|promos\/redeem|subscription\/(?:telegram\/(?:start|status|confirm)|tribute\/check|orders(?:\/[a-zA-Z0-9-]+\/(verify|cancel))?))$/.test(route);
+      : request.method === 'POST' && /^\/v1\/(check-license|issue-launch-ticket|referrals\/claim|promos\/redeem|codes\/redeem|auth\/telegram\/(?:start|status)|subscription\/(?:telegram\/(?:start|status|confirm|unlink)|tribute\/check|orders(?:\/[a-zA-Z0-9-]+\/(verify|cancel))?))$/.test(route);
     const send = (status, body) => {
       response.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
       response.end(body);
     };
     if (!allowed) { send(404, '{"error":"Not found"}'); return true; }
-    if (route !== '/health' && !/^Bearer \S+$/i.test(request.headers.authorization || '')) {
+    // These two POST endpoints create/poll a one-time login challenge before a
+    // launcher session exists. Linking/unlinking an existing account stays private.
+    const publicLogin = request.method === 'POST' && /^\/v1\/auth\/telegram\/(?:start|status)$/.test(route);
+    if (route !== '/health' && !publicLogin && !/^Bearer \S+$/i.test(request.headers.authorization || '')) {
       send(401, '{"error":"Authentication required"}'); return true;
     }
     try {
@@ -29,7 +32,7 @@ function createLauncherLicense({fetchImpl = fetch, timeout = 15000} = {}) {
       if (request.headers.authorization) headers.Authorization = request.headers.authorization;
       if (request.headers.apikey) headers.apikey = request.headers.apikey;
       const result = await fetchImpl(upstream + route + url.search, {
-        method:request.method, headers, redirect:'error', signal:AbortSignal.timeout(timeout),
+        method:request.method, headers, redirect:'error', cache:'no-store', signal:AbortSignal.timeout(timeout),
         ...(request.method === 'POST' ? {body:Buffer.concat(chunks)} : {})
       });
       send(result.status, await result.text());
