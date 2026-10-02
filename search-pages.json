@@ -1,0 +1,81 @@
+{
+  "pages": [
+    {
+      "path": "/apps",
+      "file": "apps/index.html",
+      "title": "Приложения для TikTok LIVE Studio — EFIR launcher",
+      "description": "Приложения EFIR для TikTok LIVE: TIMER, IMMWIGET, Flappy Gifts и Echo Live. Назначение, реальные возможности и руководства по настройке.",
+      "type": "collection"
+    },
+    {
+      "path": "/guides",
+      "file": "guides/index.html",
+      "title": "Руководства для TikTok LIVE Studio — EFIR launcher",
+      "description": "Настройка EFIR и TikTok LIVE Studio: озвучка комментариев, виджеты, прозрачные видео, топ лайкеров и выбор инструментов для интерактивного эфира.",
+      "type": "collection"
+    },
+    {
+      "path": "/apps/timer",
+      "file": "apps/timer/index.html",
+      "title": "TIMER — таймер и рулетка для TikTok LIVE | EFIR launcher",
+      "description": "TIMER для TikTok LIVE: время за подарки и лайки, рулетка, топ лайкеров и мультиплеер. Возможности приложения и настройка через EFIR launcher.",
+      "type": "app"
+    },
+    {
+      "path": "/apps/immwidget",
+      "file": "apps/immwidget/index.html",
+      "title": "IMMWIGET — виджеты для стрима TikTok | EFIR launcher",
+      "description": "Редактор виджетов для TikTok LIVE Studio: текст, изображения и подарки. Отдельные виджеты по ссылке, бегущие строки и слайдшоу как локальные видео.",
+      "type": "app"
+    },
+    {
+      "path": "/apps/flappy-gifts",
+      "file": "apps/flappy-gifts/index.html",
+      "title": "Flappy Gifts — игра за подарки TikTok LIVE | EFIR launcher",
+      "description": "Интерактивная игра Flappy Gifts для TikTok LIVE. Подарки, лайки и подписки управляют движением; триггеры, спасение и статистика зрителей.",
+      "type": "app"
+    },
+    {
+      "path": "/apps/echo-live",
+      "file": "apps/echo-live/index.html",
+      "title": "Echo Live — озвучка комментариев TikTok | EFIR launcher",
+      "description": "Озвучка комментариев TikTok LIVE на русском: локальные голоса Эхо, фильтры аудитории, случайный голос и чёрный список. Echo Live в EFIR launcher.",
+      "type": "app"
+    },
+    {
+      "path": "/guides/tiktok-live-studio",
+      "file": "guides/tiktok-live-studio/index.html",
+      "title": "EFIR launcher и TikTok LIVE Studio: как начать стрим",
+      "description": "Как установить EFIR launcher, войти через Telegram и добавить приложения, виджеты и звук в TikTok LIVE Studio. Проверка сцены перед эфиром.",
+      "type": "guide"
+    },
+    {
+      "path": "/guides/ozvuchka-kommentariev-tiktok",
+      "file": "guides/ozvuchka-kommentariev-tiktok/index.html",
+      "title": "Озвучка комментариев TikTok: настройка Echo Live",
+      "description": "Как включить русскую озвучку комментариев TikTok LIVE, выбрать голос, настроить фильтры и вывести речь в LIVE Studio без дублирования звука.",
+      "type": "guide"
+    },
+    {
+      "path": "/guides/vidzhety-tiktok-live",
+      "file": "guides/vidzhety-tiktok-live/index.html",
+      "title": "Виджеты для стрима TikTok: ссылки, видео и прозрачность",
+      "description": "Как создать виджет для TikTok LIVE Studio в IMMWIGET, добавить его по ссылке, сохранить бегущую строку или слайдшоу в видео и настроить плавность.",
+      "type": "guide"
+    },
+    {
+      "path": "/guides/top-lajkov-tiktok",
+      "file": "guides/top-lajkov-tiktok/index.html",
+      "title": "Топ лайков TikTok LIVE: лайкеры и цели в TIMER",
+      "description": "Где смотреть топ лайкеров TikTok LIVE в TIMER, чем рейтинг отличается от общей цели лайков и как использовать активность зрителей в эфире.",
+      "type": "guide"
+    },
+    {
+      "path": "/guides/alternativa-tikfinity-streamtoearn",
+      "file": "guides/alternativa-tikfinity-streamtoearn/index.html",
+      "title": "Альтернатива TikFinity и StreamToEarn: когда подходит EFIR",
+      "description": "Выбираете инструменты для TikTok LIVE вместо TikFinity или StreamToEarn? Возможности EFIR launcher: озвучка чата, оформление, таймер и игра со зрителями.",
+      "type": "guide"
+    }
+  ]
+}

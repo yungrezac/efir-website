@@ -8,6 +8,8 @@
     "start": "node scripts/serve.cjs",
     "prepare:download": "node scripts/prepare-download.cjs",
     "check:seo": "node scripts/check-seo.cjs",
+    "build:seo": "node scripts/search-pages.cjs && node scripts/build-seo.cjs",
+    "submit:indexnow": "node scripts/submit-indexnow.cjs",
     "check:deploy": "npm run check:seo && node scripts/check-download.cjs",
     "prepare:railway": "node scripts/prepare-railway.cjs"
   },

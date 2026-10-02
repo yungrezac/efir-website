@@ -1,0 +1,76 @@
+{
+  "pages": [
+    {
+      "path": "/",
+      "file": "index.html",
+      "sha256": "46d134dcb6334a2955a253643832591b6009990e564ad032efcdcd81adf35aa0",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/apps",
+      "file": "apps/index.html",
+      "sha256": "3e23761d9965d4c21e77a28caf932c1d23c8b5a6383ea93a2195ce75a2271380",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/guides",
+      "file": "guides/index.html",
+      "sha256": "edc9494edb6aa8931f94dd5dd8d4f89d0904b442d853c45e6222325e1996d87d",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/apps/timer",
+      "file": "apps/timer/index.html",
+      "sha256": "02241ffc48a26f06ddb7e114b57fb05c20b1c266d38ec5fdb614f2247d9e0188",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/apps/immwidget",
+      "file": "apps/immwidget/index.html",
+      "sha256": "2815c8c83237fe54e7e02b2ed8e6cb1bd9256a0e8bac7b43245e8b3747a03b0d",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/apps/flappy-gifts",
+      "file": "apps/flappy-gifts/index.html",
+      "sha256": "84cf169c4f17d7100e95dbe14db0f5bde015fdc546861e0d9a2f0c6d750d58eb",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/apps/echo-live",
+      "file": "apps/echo-live/index.html",
+      "sha256": "d96bfd33ddc4dd9294ea923a4396b18c696913503cbfde77b50bec04c15e7dea",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/guides/tiktok-live-studio",
+      "file": "guides/tiktok-live-studio/index.html",
+      "sha256": "447f41993c2dc49d8df634d5ca6709fe7227c653da7ce3aa101e433f16322053",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/guides/ozvuchka-kommentariev-tiktok",
+      "file": "guides/ozvuchka-kommentariev-tiktok/index.html",
+      "sha256": "2ddb58bd87d5d733cb5941a5018b7ab14181eaff7c903f6fcb8751c8575c85fd",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/guides/vidzhety-tiktok-live",
+      "file": "guides/vidzhety-tiktok-live/index.html",
+      "sha256": "7adf67c5a264647da4d7cb531e1593803839a9d2008ed97d5c736d34a1282a1e",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/guides/top-lajkov-tiktok",
+      "file": "guides/top-lajkov-tiktok/index.html",
+      "sha256": "8890e355c59f0bcad42175bec662760f2305744209140664712149720bca7c25",
+      "lastmod": "2026-10-02"
+    },
+    {
+      "path": "/guides/alternativa-tikfinity-streamtoearn",
+      "file": "guides/alternativa-tikfinity-streamtoearn/index.html",
+      "sha256": "84e93901ededf05f646927421e5089742a5a4420aebe938a217b22e03be5e685",
+      "lastmod": "2026-10-02"
+    }
+  ]
+}

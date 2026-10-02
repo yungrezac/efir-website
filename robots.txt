@@ -3,6 +3,9 @@ Allow: /
 Disallow: /artifacts/
 Disallow: /scripts/
 Disallow: /downloads/
+Disallow: /api/
+Disallow: /widget/
+Disallow: /widget.html
 Disallow: /README.md
 Disallow: /SEO.md
 Disallow: /package.json
@@ -11,4 +14,5 @@ Disallow: /release.json
 Disallow: /*.exe$
 Disallow: /*.zip$
 
-Sitemap: https://efir-website-production.up.railway.app/sitemap.xml
+# Public pages are available to search and AI-search crawlers under these rules.
+Sitemap: https://efirlive.pro/sitemap.xml

@@ -6,6 +6,7 @@ const http = require('node:http');
 const path = require('node:path');
 
 const siteRoot = path.resolve(__dirname, '..');
+const seo = require('./public-seo.cjs');
 const protectService = require('./protect-service.cjs').createProtectService();
 const homepageEnabled = require('./homepage-status.cjs').createHomepageStatus();
 const launcherLicense = require('./launcher-license.cjs').createLauncherLicense();
@@ -16,7 +17,7 @@ const port = Number(process.env.PORT || 4173);
 const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
 const publicFiles = new Set([
   '/admin-referrals.js', '/admin-referrals.css', '/admin-workspace.js', '/admin-workspace.css', '/referral-entry.js',
-  '/', '/index.html', '/styles.css', '/search-content.css', '/app.js',
+  '/', '/index.html', '/styles.css', '/home.css', '/search-pages.css', '/search-content.css', '/app.js',
   '/timer-preview.css', '/timer-preview.js', '/release.json', '/robots.txt', '/sitemap.xml',
   '/vladosikpypsik', '/vladosikpypsik/', '/admin.css', '/admin.js', '/admin-control.js', '/admin-control.css', '/admin-landing-preview.html', '/admin-landing-preview.js', '/landing-preview.css', '/landing-render.js', '/analytics.js', '/analytics.css', '/site-settings.js',
   '/protect', '/protect/', '/protect.html', '/protect.css', '/protect.js',
@@ -25,6 +26,8 @@ const publicFiles = new Set([
   '/violla', '/violla/', '/violla.html', '/violla.css', '/landing-page.css', '/landing-public.js', '/landing-layout.js'
   ,'/widget.html','/widget-render.js','/widget-public.js','/landing-icons.css','/landing-icons.js'
 ]);
+for (const route of seo.pageFiles.keys()) publicFiles.add(route);
+if (seo.keyPath) publicFiles.add(seo.keyPath);
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -50,8 +53,9 @@ const mime = {
 };
 
 const server = http.createServer(async (request, response) => {
+  if (/^\/api(?:\/|\?)/.test(request.url || '')) response.setHeader('X-Robots-Tag', 'noindex');
   const fail = (status, message, headers = {}) => {
-    response.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
+    response.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', ...headers });
     response.end(request.method === 'HEAD' ? undefined : message);
   };
 
@@ -61,24 +65,27 @@ const server = http.createServer(async (request, response) => {
   }
 
   try {
-    if (await linkIconService(request, response)) return;
-    if (await landingService(request, response)) return;
     let pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replaceAll('\\', '/');
-    if (/^\/widget\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(pathname)) pathname='/widget.html';
     if ((pathname==='/'||pathname==='/index.html') && !(await homepageEnabled())) {
       response.writeHead(503,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Retry-After':'60','X-Robots-Tag':'noindex','Content-Length':maintenancePage.length});
       response.end(request.method==='HEAD'?undefined:maintenancePage);return;
     }
+    if (seo.redirect(request, response, pathname)) return;
+    // Canonical host redirects must retain the public widget ID in the URL.
+    if (/^\/widget\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i.test(pathname)) pathname='/widget.html';
+    if (await linkIconService(request, response)) return;
+    // Public app/guide pages are independent of the creator-landing database.
+    if (!seo.pageFiles.has(pathname) && await landingService(request, response)) return;
     if (pathname === '/api/protect') {
       try {
         const data = await protectService.lookup(new URL(request.url, 'http://localhost').searchParams.get('username'));
-        response.writeHead(200, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+        response.writeHead(200, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex'});
         response.end(request.method === 'HEAD' ? undefined : JSON.stringify(data));
       } catch (error) { fail(error.status || 503, error.status === 400 ? 'Invalid username' : 'Verification temporarily unavailable'); }
       return;
     }
     if (pathname === '/downloads/EFIR-Launcher-Setup.exe') {
-      response.writeHead(302, { Location: 'https://github.com/yungrezac/efirlauncher/releases/latest/download/EFIR-Launcher-Setup.exe', 'Cache-Control': 'no-cache' });
+      response.writeHead(302, { Location: 'https://github.com/yungrezac/efirlauncher/releases/latest/download/EFIR-Launcher-Setup.exe', 'Cache-Control': 'no-cache', 'X-Robots-Tag': 'noindex' });
       response.end();
       return;
     }
@@ -89,7 +96,7 @@ const server = http.createServer(async (request, response) => {
       return fail(404, 'Not found');
     }
     const pageRoutes = { '/sinabon': '/sinabon.html', '/astral': '/astral.html', '/darisha': '/darisha.html', '/violla': '/violla.html', '/vladosikpypsik': '/admin.html', '/protect': '/protect.html' };
-    const resolvedPathname = pageRoutes[pathname.replace(/\/$/, '')] || pathname;
+    const resolvedPathname = seo.pageFiles.get(pathname) || pageRoutes[pathname.replace(/\/$/, '')] || pathname;
     let file = path.resolve(siteRoot, `.${resolvedPathname}`);
     const relative = path.relative(siteRoot, file);
     if (relative.startsWith('..') || path.isAbsolute(relative)) return fail(403, 'Forbidden');
@@ -108,6 +115,8 @@ const server = http.createServer(async (request, response) => {
       'Content-Length': stat.size,
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'no-cache',
+      'ETag': 'W/"' + stat.size.toString(16) + '-' + Math.trunc(stat.mtimeMs).toString(16) + '"',
+      'Last-Modified': stat.mtime.toUTCString(),
       'X-Content-Type-Options': 'nosniff'
     };
     const publicPath = realRelative.split(path.sep).join('/');
@@ -115,13 +124,20 @@ const server = http.createServer(async (request, response) => {
     if (/^assets\/creators\/(astral|darisha|sinabon|violla)\.png$/.test(publicPath)) headers['Access-Control-Allow-Origin'] = '*';
     if (/^(?:artifacts|scripts|downloads)\//i.test(publicPath)
       || /^(?:README\.md|SEO\.md|package(?:-lock)?\.json|release\.json)$/i.test(publicPath)
-      || /\.(?:exe|zip)$/i.test(publicPath)) {
+      || /^(?:admin(?:-landing-preview)?\.html|widget\.html|protect\.html)$/i.test(publicPath)
+      || pathname === seo.keyPath || /\.(?:exe|zip)$/i.test(publicPath)) {
       headers['X-Robots-Tag'] = 'noindex';
     }
     if (path.extname(file).toLowerCase() === '.exe') {
       headers['Content-Disposition'] = `attachment; filename="${path.basename(file).replaceAll('"', '')}"`;
     }
 
+    if (!request.headers.range && (request.headers['if-none-match'] === headers.ETag
+      || (!request.headers['if-none-match'] && request.headers['if-modified-since']
+        && Date.parse(request.headers['if-modified-since']) >= Math.trunc(stat.mtimeMs / 1000) * 1000))) {
+      delete headers['Content-Length'];
+      response.writeHead(304, headers); response.end(); return;
+    }
     let status = 200;
     let start = 0;
     let end = stat.size - 1;

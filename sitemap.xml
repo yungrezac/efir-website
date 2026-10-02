@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://efir-website-production.up.railway.app/</loc>
-  </url>
+  <url><loc>https://efirlive.pro/</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/apps</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/guides</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/apps/timer</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/apps/immwidget</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/apps/flappy-gifts</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/apps/echo-live</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/guides/tiktok-live-studio</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/guides/ozvuchka-kommentariev-tiktok</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/guides/vidzhety-tiktok-live</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/guides/top-lajkov-tiktok</loc><lastmod>2026-10-02</lastmod></url>
+  <url><loc>https://efirlive.pro/guides/alternativa-tikfinity-streamtoearn</loc><lastmod>2026-10-02</lastmod></url>
 </urlset>

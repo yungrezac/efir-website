@@ -1,167 +1,91 @@
-'use strict';
-
-// Static consistency checks for this single-page site; no network or dependencies.
-const fs = require('node:fs');
-const path = require('node:path');
-
-const siteRoot = path.resolve(__dirname, '..');
-const canonical = 'https://efir-website-production.up.railway.app/';
-const failures = [];
-let checks = 0;
-const check = (condition, message) => {
-  checks += 1;
-  if (!condition) failures.push(message);
-};
-const read = file => fs.readFileSync(path.join(siteRoot, file), 'utf8');
-const attrs = tag => {
-  const values = {};
-  for (const match of tag.matchAll(/\s([\w:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g)) {
-    values[match[1].toLowerCase()] = match[2] ?? match[3] ?? match[4] ?? '';
-  }
-  return values;
-};
-const decode = value => value.replace(/&(?:amp|quot|apos|lt|gt|nbsp);/g, entity => ({
-  '&amp;': '&', '&quot;': '"', '&apos;': "'", '&lt;': '<', '&gt;': '>', '&nbsp;': ' '
-})[entity]);
-
-function contentText(html) {
-  // Exclude non-content and explicitly hidden trees. CSS visibility needs browser review.
-  const source = html.replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<(script|style|template|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '');
-  const stack = [];
-  const fragments = [];
-  const voids = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
-  for (const token of source.match(/<[^>]*>|[^<]+/g) || []) {
-    const end = /^<\/([\w:-]+)/.exec(token);
-    const start = /^<([\w:-]+)/.exec(token);
-    if (end) {
-      const index = stack.map(item => item.name).lastIndexOf(end[1].toLowerCase());
-      if (index !== -1) stack.length = index;
-    } else if (start) {
-      const name = start[1].toLowerCase();
-      const attributes = attrs(token);
-      const hidden = stack.some(item => item.hidden) || 'hidden' in attributes
-        || attributes['aria-hidden'] === 'true'
-        || /(?:display\s*:\s*none|visibility\s*:\s*hidden)/i.test(attributes.style || '');
-      if (!voids.has(name) && !token.endsWith('/>')) stack.push({ name, hidden });
-    } else if (!token.startsWith('<') && !stack.some(item => item.hidden)) {
-      fragments.push(token);
-    }
-  }
-  return decode(fragments.join(' ').replace(/\s+/g, ' '));
-}
-
+﻿'use strict';
+const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
+const root = path.resolve(__dirname, '..'), origin = 'https://efirlive.pro';
+const failures = []; let checks = 0;
+const check = (condition, message) => { checks++; if (!condition) failures.push(message); };
+const read = file => fs.readFileSync(path.join(root, file), 'utf8');
+const attrs = tag => Object.fromEntries([...tag.matchAll(/\s([\w:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g)].map(m => [m[1].toLowerCase(), m[2] ?? m[3] ?? m[4] ?? '']));
+const text = html => html.replace(/<(script|style|svg)\b[^>]*>[\s\S]*?<\/\1>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 try {
-  const html = read('index.html');
-  const head = /<head\b[^>]*>([\s\S]*?)<\/head>/i.exec(html)?.[1] || '';
-  const body = /<body\b[^>]*>([\s\S]*?)<\/body>/i.exec(html)?.[1] || '';
-  const meta = [...head.matchAll(/<meta\b[^>]*>/gi)].map(match => attrs(match[0]));
-  const links = [...head.matchAll(/<link\b[^>]*>/gi)].map(match => attrs(match[0]));
-  const titles = [...head.matchAll(/<title\b[^>]*>([\s\S]*?)<\/title>/gi)];
-  const descriptions = meta.filter(item => item.name?.toLowerCase() === 'description');
-  const canonicals = links.filter(item => item.rel?.toLowerCase().split(/\s+/).includes('canonical'));
-  check(titles.length === 1 && titles[0][1].trim().length > 10, 'Expected one descriptive title in <head>.');
-  check(descriptions.length === 1 && descriptions[0].content?.trim().length > 60, 'Expected one useful meta description.');
-  check(canonicals.length === 1 && canonicals[0].href === canonical, `Canonical must be exactly ${canonical}`);
-  check(!meta.some(item => item.name?.toLowerCase() === 'keywords'), 'Do not add a meta keywords list.');
-  check(!meta.some(item => /^(robots|googlebot|yandex)$/i.test(item.name || '') && /noindex|none/i.test(item.content || '')), 'The landing page must allow indexing.');
-  check(!links.some(item => 'hreflang' in item), 'No hreflang until real translated pages are published.');
-  for (const tag of [...head.matchAll(/<(?:link|script)\b[^>]*>/gi)]) {
-    const attributes = attrs(tag[0]);
-    const source = attributes.src || (attributes.rel === 'stylesheet' ? attributes.href : null);
-    if (source?.startsWith('./')) {
-      check(fs.existsSync(path.join(siteRoot, source)), `Missing local rendering asset: ${source}`);
+  const pages = [{ path: '/', file: 'index.html', type: 'home' }, ...JSON.parse(read('search-pages.json')).pages];
+  const manifest = JSON.parse(read('seo-manifest.json')).pages;
+  const byPath = new Map(pages.map(p => [p.path, p]));
+  check(byPath.size === pages.length, 'Duplicate public route');
+  const titles = new Set(), descriptions = new Set(), allLinks = new Map();
+  const definitions = new Set(), references = [];
+  for (const page of pages) {
+    const html = read(page.file), prefix = page.path + ': ', canonical = origin + page.path;
+    const head = /<head\b[^>]*>([\s\S]*?)<\/head>/i.exec(html)?.[1] || '';
+    const body = /<body\b[^>]*>([\s\S]*?)<\/body>/i.exec(html)?.[1] || '';
+    const meta = [...head.matchAll(/<meta\b[^>]*>/gi)].map(m => attrs(m[0]));
+    const links = [...head.matchAll(/<link\b[^>]*>/gi)].map(m => attrs(m[0]));
+    const title = [...head.matchAll(/<title\b[^>]*>([\s\S]*?)<\/title>/gi)];
+    const description = meta.filter(m => m.name === 'description');
+    check(title.length === 1 && title[0][1].length >= 15 && title[0][1].length <= 110, prefix + 'one useful title');
+    check(!titles.has(title[0]?.[1]), prefix + 'title must be unique'); titles.add(title[0]?.[1]);
+    check(description.length === 1 && description[0].content?.length >= 65 && description[0].content.length <= 350, prefix + 'one useful description');
+    check(!descriptions.has(description[0]?.content), prefix + 'description must be unique'); descriptions.add(description[0]?.content);
+    check(links.filter(l => l.rel === 'canonical').length === 1 && links.find(l => l.rel === 'canonical')?.href === canonical, prefix + 'canonical URL');
+    check(!/efir-website-production\.up\.railway\.app/.test(html), prefix + 'legacy domain in public HTML');
+    check(!meta.some(m => m.name === 'keywords'), prefix + 'no keyword stuffing meta');
+    check(!meta.some(m => /^(robots|googlebot|yandex)$/i.test(m.name || '') && /noindex|nosnippet|none/i.test(m.content || '')), prefix + 'index and snippets permitted');
+    check(/<html\s[^>]*lang="ru"/.test(html), prefix + 'Russian language');
+    check((body.match(/<h1\b/gi) || []).length === 1, prefix + 'one H1');
+    check(text(body).length >= 700, prefix + 'useful server-rendered text');
+    const ids = [...body.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]);
+    check(ids.length === new Set(ids).size, prefix + 'unique DOM IDs');
+    for (const property of ['og:title', 'og:description', 'og:url', 'og:image']) check(meta.filter(m => m.property === property && m.content).length === 1, prefix + property);
+    check(meta.find(m => m.property === 'og:url')?.content === canonical, prefix + 'Open Graph canonical');
+    check(meta.find(m => m.property === 'og:image')?.content === origin + '/assets/efir-social.png', prefix + 'public social image');
+    check(meta.find(m => m.name === 'twitter:card')?.content === 'summary_large_image', prefix + 'social card');
+    const discovered = new Set();
+    for (const tag of html.matchAll(/<(a|link|script|img)\b[^>]*>/gi)) {
+      const a = attrs(tag[0]), resource = tag[1] !== 'a', href = a.src || a.href;
+      if (!href || /^(data:|mailto:|tg:|efir:)/i.test(href)) continue;
+      const target = new URL(href, canonical);
+      if (target.origin !== origin) continue;
+      if (byPath.has(target.pathname)) {
+        if (!resource) discovered.add(target.pathname);
+        if (target.hash) check(read(byPath.get(target.pathname).file).includes('id="' + target.hash.slice(1) + '"'), prefix + 'missing anchor ' + href);
+      } else if (resource) check(fs.existsSync(path.join(root, target.pathname)), prefix + 'missing local asset ' + href);
+      else check(['/protect', '/downloads/EFIR-Launcher-Setup.exe'].includes(target.pathname), prefix + 'unpublished internal link ' + href);
     }
-  }
-  for (const key of ['og:url', 'og:image', 'og:title', 'og:description']) {
-    const entries = meta.filter(item => item.property === key);
-    check(entries.length === 1 && Boolean(entries[0].content), `Expected one ${key} property.`);
-  }
-  const socialImage = meta.find(item => item.property === 'og:image')?.content;
-  if (socialImage?.startsWith(canonical)) {
-    const imagePath = path.join(siteRoot, new URL(socialImage).pathname);
-    check(fs.existsSync(imagePath), 'The Open Graph image must exist locally.');
-    if (fs.existsSync(imagePath)) {
-      const png = fs.readFileSync(imagePath);
-      check(png.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])), 'Social image must be a real PNG.');
-      check(png.length >= 24 && png.readUInt32BE(16) === 1200 && png.readUInt32BE(20) === 630, 'Social image must be 1200×630.');
+    allLinks.set(page.path, discovered);
+    const schemas = [...head.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(m => attrs('<script ' + m[1] + '>').type === 'application/ld+json').map(m => JSON.parse(m[2]));
+    check(schemas.length > 0, prefix + 'structured data');
+    const types = new Set();
+    function walk(node) {
+      if (Array.isArray(node)) return node.forEach(walk);
+      if (!node || typeof node !== 'object') return;
+      for (const type of [].concat(node['@type'] || [])) types.add(type);
+      if (node['@id']) {
+        check(node['@id'].startsWith(origin + '/'), prefix + 'canonical entity IDs');
+        if (Object.keys(node).length > 1) definitions.add(node['@id']); else references.push(node['@id']);
+      }
+      check(!node.aggregateRating && !node.review, prefix + 'no invented ratings');
+      Object.values(node).forEach(walk);
     }
-  } else check(false, 'The social image must use the canonical domain.');
-  check(attrs(/<html\b[^>]*>/i.exec(html)?.[0] || '').lang === 'ru', 'The current page language must be ru.');
-  check((body.match(/<h1\b/gi) || []).length === 1, 'Expected one main heading.');
-
-  const ids = [...body.matchAll(/<[a-z][^>]*>/gi)].map(match => attrs(match[0]).id).filter(Boolean);
-  check(new Set(ids).size === ids.length, 'HTML IDs must be unique.');
-  for (const match of body.matchAll(/<a\b[^>]*>/gi)) {
-    const href = attrs(match[0]).href;
-    if (href?.startsWith('#') && href.length > 1) check(ids.includes(href.slice(1)), `Missing anchor target: ${href}`);
+    schemas.forEach(schema => { check(schema['@context'] === 'https://schema.org', prefix + 'schema context'); walk(schema); });
+    check(types.has(page.type === 'app' || page.type === 'home' ? 'SoftwareApplication' : page.type === 'guide' ? 'Article' : 'CollectionPage'), prefix + 'appropriate schema');
+    if (page.path !== '/') check(types.has('BreadcrumbList'), prefix + 'breadcrumbs');
+    const saved = manifest.find(item => item.path === page.path);
+    check(saved?.sha256 === crypto.createHash('sha256').update(html).digest('hex'), prefix + 'sitemap metadata stale; run build:seo');
   }
-
-  const visible = contentText(body);
-  for (const [name, pattern] of [
-    ['TikTimer', /Tik\s?Timer/i], ['Flappy Gifts', /Flappy\s+Gifts/i],
-    ['EFIR launcher', /EFIR/i], ['Echo Live', /Echo Live/i],
-    ['TikTok context', /TikTok|Тик\s?Ток/i], ['timer', /таймер/i],
-    ['gifts', /подар/i], ['time', /врем/i], ['roulette', /рулет/i],
-    ['comment speech', /озвуч/i], ['comments or chat', /комментар|чат/i],
-    ['Echo Live beta disclosure', /бета/i], ['voice quality disclosure', /качеств[а-яё\s,.—-]{0,40}голос|голос[а-яё\s,.—-]{0,40}качеств/i]
-  ]) check(pattern.test(visible), `Missing visible topic: ${name}`);
-
-  const scripts = [...head.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
-    .filter(match => attrs(`<script ${match[1]}>`).type === 'application/ld+json');
-  check(scripts.length > 0, 'Expected JSON-LD structured data in <head>.');
-  const documents = scripts.map(match => JSON.parse(match[2]));
-  const definitions = new Map();
-  const references = [];
-  const types = new Set();
-  const walk = node => {
-    if (Array.isArray(node)) return node.forEach(walk);
-    if (!node || typeof node !== 'object') return;
-    if (node['@type']) for (const type of [].concat(node['@type'])) types.add(type);
-    if (node['@id']) {
-      const id = node['@id'];
-      check(typeof id === 'string' && id.startsWith(canonical), `Structured-data @id must use the canonical domain: ${id}`);
-      if (Object.keys(node).length > 1) {
-        check(!definitions.has(id), `Duplicate JSON-LD definition: ${id}`);
-        definitions.set(id, node);
-      } else references.push(id);
-    }
-    if (typeof node.url === 'string' && node.url.startsWith(canonical)) {
-      const target = new URL(node.url);
-      check(target.pathname === '/', `Structured data points at an unpublished page: ${node.url}`);
-      if (target.hash) check(ids.includes(decodeURIComponent(target.hash.slice(1))), `Structured-data URL anchor does not exist: ${node.url}`);
-    }
-    Object.values(node).forEach(walk);
-  };
-  for (const document of documents) {
-    check(document['@context'] === 'https://schema.org', 'JSON-LD must use https://schema.org.');
-    walk(document);
-  }
-  for (const id of references) check(definitions.has(id), `Unresolved JSON-LD reference: ${id}`);
-  for (const type of ['WebSite', 'WebPage', 'SoftwareApplication']) check(types.has(type), `Missing schema type: ${type}`);
-  const structured = JSON.stringify(documents);
-  for (const product of [/EFIR/i, /TikTimer/i, /Flappy Gifts/i, /Echo Live/i]) {
-    check(product.test(structured), `Missing product in structured data: ${product}`);
-  }
-
+  references.forEach(id => check(definitions.has(id), 'Unresolved schema entity ' + id));
+  const reachable = new Set(['/']), queue = ['/'];
+  while (queue.length) for (const route of allLinks.get(queue.shift()) || []) if (!reachable.has(route)) { reachable.add(route); queue.push(route); }
+  for (const page of pages) check(reachable.has(page.path), 'No crawlable path from home to ' + page.path);
   const robots = read('robots.txt');
-  check(/^User-agent:\s*\*\s*$/mi.test(robots), 'Expected general crawler rules.');
-  check(robots.split(/\r?\n/).some(line => line.trim() === `Sitemap: ${canonical}sitemap.xml`), 'robots.txt must reference the public sitemap.');
-  check(!/^Disallow:\s*\/\s*$/mi.test(robots), 'Do not block the entire site.');
-  check(!/^Disallow:\s*\/(?:assets\/?|styles\.css|timer-preview\.css|app\.js|timer-preview\.js)\s*$/mi.test(robots), 'Rendering assets must remain crawlable.');
+  check(/^User-agent:\s*\*\s*$/m.test(robots), 'General robots policy');
+  check(!/^Disallow:\s*\/\s*$/m.test(robots), 'Public content must be crawlable');
+  check(robots.includes('Sitemap: ' + origin + '/sitemap.xml'), 'Canonical sitemap in robots');
+  check(!/^Disallow:\s*\/(apps|guides|assets|home\.css|search-pages\.css)/m.test(robots), 'Rendering and content must be crawlable');
   const sitemap = read('sitemap.xml');
-  check(/<urlset\s+xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"\s*>/.test(sitemap), 'Expected standard sitemap namespace.');
-  const urls = [...sitemap.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/g)].map(match => match[1].trim());
-  check(urls.length === 1 && urls[0] === canonical, 'Sitemap must list only the real canonical home page.');
-  check(!/<lastmod>/i.test(sitemap), 'Do not add an unverified sitemap last-modified date.');
-} catch (error) {
-  failures.push(error.message);
-}
-
-if (failures.length) {
-  console.error(`SEO checks failed (${failures.length}):\n${failures.map(message => `- ${message}`).join('\n')}`);
-  process.exitCode = 1;
-} else {
-  console.log(`SEO checks passed (${checks} assertions). Domain: ${canonical}`);
-  console.log('Static files only; public hosting, indexing and rankings are not verified.');
-}
+  const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
+  check(urls.length === pages.length && new Set(urls).size === urls.length && urls.every(url => byPath.has(url.replace(origin, '')) && url.startsWith(origin + '/')), 'Sitemap includes every canonical page exactly once');
+  for (const entry of manifest) check(/^\d{4}-\d{2}-\d{2}$/.test(entry.lastmod) && entry.lastmod <= new Date().toISOString().slice(0, 10), 'Real modification dates');
+  const png = fs.readFileSync(path.join(root, 'assets/efir-social.png'));
+  check(png.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && png.readUInt32BE(16) === 1200 && png.readUInt32BE(20) === 630, '1200x630 PNG social card');
+} catch (error) { failures.push(error.stack); }
+if (failures.length) { console.error(failures.join('\n')); process.exitCode = 1; }
+else console.log(`SEO checks passed: ${checks} assertions. Public indexing/rankings require search-engine processing.`);

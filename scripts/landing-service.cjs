@@ -7,7 +7,7 @@ exports.createLandingService=({fetchImpl=fetch}={})=>async(request,response)=>{
  const old=pathname.match(/^\/u\/([a-z0-9][a-z0-9_-]{2,39})\/?$/)||pathname.match(/^\/(astral|sinabon|darisha|violla)\.html$/);
  if(old){response.writeHead(308,{Location:'/'+old[1],'Cache-Control':'no-store'});response.end();return true;}
  const match=pathname.match(/^\/([a-z0-9][a-z0-9_-]{2,39})\/?$/);
- if(!match||['admin','vladosikpypsik','protect','api','assets','downloads','widget','index','robots','sitemap','release','scripts','health','healthz','login','logout','auth'].includes(match[1]))return false;
+ if(!match||['apps','guides','admin','vladosikpypsik','protect','api','assets','downloads','widget','index','robots','sitemap','release','scripts','health','healthz','login','logout','auth'].includes(match[1]))return false;
  let status=404,doc=null,disabled=false;
  if(match)try{
   const result=await fetchImpl(endpoint,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({p_slug:match[1]}),signal:AbortSignal.timeout(8000)});
