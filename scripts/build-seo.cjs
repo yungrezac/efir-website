@@ -11,7 +11,8 @@ const oldFile = path.join(root, 'seo-manifest.json');
 const previous = fs.existsSync(oldFile) ? JSON.parse(fs.readFileSync(oldFile, 'utf8')).pages : [];
 const today = new Date().toISOString().slice(0, 10);
 const manifest = pages.map(page => {
-  const hash = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, page.file))).digest('hex');
+  const content = fs.readFileSync(path.join(root, page.file), 'utf8').replace(/\r\n/g, '\n');
+  const hash = crypto.createHash('sha256').update(content).digest('hex');
   const old = previous.find(item => item.path === page.path && item.sha256 === hash);
   return { path: page.path, file: page.file, sha256: hash, lastmod: old?.lastmod || today };
 });

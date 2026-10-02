@@ -69,7 +69,7 @@ try {
     check(types.has(page.type === 'app' || page.type === 'home' ? 'SoftwareApplication' : page.type === 'guide' ? 'Article' : 'CollectionPage'), prefix + 'appropriate schema');
     if (page.path !== '/') check(types.has('BreadcrumbList'), prefix + 'breadcrumbs');
     const saved = manifest.find(item => item.path === page.path);
-    check(saved?.sha256 === crypto.createHash('sha256').update(html).digest('hex'), prefix + 'sitemap metadata stale; run build:seo');
+    check(saved?.sha256 === crypto.createHash('sha256').update(html.replace(/\r\n/g, '\n')).digest('hex'), prefix + 'sitemap metadata stale; run build:seo');
   }
   references.forEach(id => check(definitions.has(id), 'Unresolved schema entity ' + id));
   const reachable = new Set(['/']), queue = ['/'];
