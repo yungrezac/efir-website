@@ -120,6 +120,10 @@ const server = http.createServer(async (request, response) => {
       'X-Content-Type-Options': 'nosniff'
     };
     const publicPath = realRelative.split(path.sep).join('/');
+    if (publicPath.startsWith('assets/gifts-769-v1/')) {
+      headers['Access-Control-Allow-Origin'] = '*';
+      headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+    }
     // Public cutout portraits are also analysed by the launcher preview canvas.
     if (/^assets\/creators\/(astral|darisha|sinabon|violla)\.png$/.test(publicPath)) headers['Access-Control-Allow-Origin'] = '*';
     if (/^(?:artifacts|scripts|downloads)\//i.test(publicPath)
