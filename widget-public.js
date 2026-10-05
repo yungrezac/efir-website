@@ -5,7 +5,7 @@
  const mode=new URLSearchParams(location.search||'').get('playback')==='compatible'?'compatible':'standard';
  const endpoint='https://qpoyojxupblhjeqbvqfr.supabase.co/rest/v1/rpc/';
  const headers={apikey:'sb_publishable_QxJKRVOdn07hduJkqcbciw_oUADNl-C','Content-Type':'application/json'};
- const assetVersion='0.7.1';
+ const assetVersion='0.8.0';
  let loaded=false,snapshot=null,retryDelay=2000,liveRetryDelay=1000,liveAssets=null,liveStyle=null,lastMarkup=null,liveObserved=false;
  async function rpc(name){
   const response=await fetch(endpoint+name,{method:'POST',headers,body:JSON.stringify({p_token:token}),signal:AbortSignal.timeout(8000),cache:'no-store'});

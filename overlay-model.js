@@ -9,11 +9,11 @@
     { id: 'top-likes', name: 'Топ по лайкам', description: 'Зрители, которые подарили эфиру больше всего лайков.', icon: 'heart', goal: false, unit: 'лайков' },
     { id: 'top-gifters', name: 'Топ дарителей', description: 'Рейтинг по сумме алмазов с момента подключения.', icon: 'crown', goal: false, unit: 'алмазов' },
     { id: 'like-goal', name: 'Цель по лайкам', description: 'Цель и прогресс по лайкам с момента подключения.', icon: 'heart', goal: true, unit: 'лайков' },
-    { id: 'follow-goal', name: 'Цель по подпискам', description: 'Новые подписки с момента подключения к эфиру.', icon: 'users', goal: true, unit: 'подписок' },
+    { id: 'follow-goal', name: 'Цель по подписчикам', description: 'Общее число подписчиков TikTok и цель для аккаунта.', icon: 'users', goal: true, unit: 'подписчиков' },
     { id: 'biggest-gift', name: 'Самый большой подарок', description: 'Самый дорогой единичный подарок и его отправитель.', icon: 'gift', goal: false, unit: 'алмазов' },
     { id: 'gift-combo', name: 'Самое большое комбо', description: 'Рекорд по количеству подарков в одной серии.', icon: 'bolt', goal: false, unit: 'подарков' }
   ];
-  const categoryNames = { minimal: 'Минимализм', neon: 'Свет и неон', gaming: 'Игровые', creative: 'Креативные', premium: 'Премиум' };
+  const categoryNames = { minimal: 'Минимализм', neon: 'Свет и неон', gaming: 'Игровые', creative: 'Креативные', premium: 'Премиум', comics: 'Комиксы', toys: 'Игрушки', space: 'Космос', animals: 'Зверята', adventure: 'Приключения', music: 'Музыка', sport: 'Спорт', nature: 'Природа', paper: 'Бумага' };
   const styles = [
     { id: 'glass', name: 'Стекло', category: 'minimal', description: 'Тонкие светлые линии и мягкий блеск цифр.', accent: '#c0ceff', layout: 'list' },
     { id: 'neon', name: 'Неоновый контур', category: 'neon', description: 'Бирюзовые штрихи и деликатное неоновое свечение.', accent: '#63f5e5', layout: 'list' },
@@ -40,6 +40,60 @@
     { id: 'bubble', name: 'Облако', category: 'creative', description: 'Округлый шрифт, воздушные маркеры и пастельные акценты.', accent: '#e0bdff', layout: 'ring' },
     { id: 'cassette', name: 'Микстейп', category: 'gaming', description: 'Кассетные отметки и тонкая шкала эквалайзера.', accent: '#ffba78', layout: 'list' }
   ];
+  // New silhouettes stay transparent. Frames are strokes, never filled cards.
+  const additions = [
+    ['speech','Реплика','comics','Речевая рамка с хвостиком и округлыми отметками.','#ffce72','list','speech','speech'],
+    ['thought','Мысли вслух','comics','Облачный контур и маленькие пузырьки мысли.','#c9c1ff','ring','thought','thought'],
+    ['comic-burst','Бум!','comics','Зубчатый контур вспышки и выразительные цифры.','#ffe66b','list','burst','burst'],
+    ['comic-strip','Кадры','comics','Углы комиксного кадра, широкие номера и диагонали.','#a9e8ff','list','panels','panels'],
+    ['manga','Манга','comics','Штрихи скорости и наклонная чёрно-белая типографика.','#f5f5ff','list','','speed'],
+    ['pop-dots','Поп-арт','comics','Растровые точки, круглые аватары и яркие числа.','#ffa7cf','list','','dots'],
+    ['sketch','Скетч','comics','Двойной рисованный контур с неровными штрихами.','#fff0b2','list','sketch','pencil'],
+    ['blocks','Кубики','toys','Квадратные жетоны, ступенчатые линии и игровой счёт.','#9edfff','list','','blocks'],
+    ['jelly','Желе','toys','Мягкий асимметричный контур и тягучая линия цели.','#e9b8ff','list','jelly','jelly'],
+    ['marshmallow','Зефир','toys','Пухлые фестоны, округлые буквы и воздушные числа.','#ffd2e9','list','scallop','cloud'],
+    ['candy-cane','Леденец','toys','Полосатая шкала, конфетные завитки и круглые метки.','#ff9db9','list','','candy'],
+    ['balloons','Шарики','toys','Контурные воздушные шары и круговая цель.','#ffd792','ring','','balloons'],
+    ['confetti','Конфетти','toys','Редкие звёздочки и бумажные завитки вокруг данных.','#b2f0be','list','','confetti'],
+    ['pinwheel','Вертушка','toys','Четыре бумажные лопасти и ромбовидные акценты.','#c4c2ff','list','','pinwheel'],
+    ['toy-train','Паровозик','toys','Рельсы, маленькие колёса и сцепленные строки.','#ffcb91','list','train','train'],
+    ['rocket','Ракета','space','Ракета на старте, косые штрихи и счёт до цели.','#ffbc91','list','','rocket'],
+    ['ufo','Летающая тарелка','space','Орбитальная дуга и тонкие лучи вокруг значений.','#b3ffda','ring','','ufo'],
+    ['saturn','Сатурн','space','Наклонные кольца, планеты-аватары и круглая цель.','#e3c0ff','ring','','saturn'],
+    ['constellation','Созвездие','space','Метки-звёзды соединены тонкой линией рейтинга.','#c7e0ff','list','','constellation'],
+    ['meteor','Метеор','space','Длинный хвост кометы и обтекаемые штрихи.','#9eefff','list','','meteor'],
+    ['cat','Котик','animals','Кошачьи ушки над контуром и маленькие усы.','#ffd0e5','list','cat','cat'],
+    ['bear','Мишка','animals','Круглые ушки и мягкие медвежьи жетоны.','#edc99f','list','bear','bear'],
+    ['bunny','Зайчик','animals','Длинные ушки, лёгкие овалы и пастельные акценты.','#dfc8ff','list','','bunny'],
+    ['fox','Лисёнок','animals','Острые ушки, треугольные метки и лисий хвост.','#ffc087','list','','fox'],
+    ['paw','Лапки','animals','Следы лап вместо строгих ранговых меток.','#bce8d1','list','','paw'],
+    ['gamepad','Геймпад','adventure','Контур контроллера, крестовина и игровые кнопки.','#b3cbff','list','gamepad','gamepad'],
+    ['pixel-cloud','Пиксельное облако','adventure','Ступенчатый пиксельный силуэт и сегменты прогресса.','#c4f4ff','list','pixel','pixel'],
+    ['quest','Свиток','adventure','Тонкий контур свитка и каллиграфические цифры.','#f6dfac','list','scroll','scroll'],
+    ['shield','Щит','adventure','Маленькие щиты на местах и эмблема достижения.','#c1d7ff','list','','shield'],
+    ['treasure','Сокровища','adventure','Уголки сундука, драгоценные метки и золотой счёт.','#ffe397','list','treasure','treasure'],
+    ['waveform','Звуковая волна','music','Звуковая линия и ритмичные столбики у значений.','#ffb7df','list','','waveform'],
+    ['vinyl','Винил','music','Концентрические дорожки пластинки и круговой индикатор.','#d1c7ff','ring','','vinyl'],
+    ['piano','Клавиши','music','Клавиатура в шкале прогресса и строгий нотный ритм.','#f7f4ee','list','','piano'],
+    ['boombox','Бумбокс','music','Две контурные колонки, частотные метки и стереосчёт.','#ffc3a4','list','boombox','boombox'],
+    ['headphones','Наушники','music','Дуга наушников и мягкие круглые аватары.','#c7efff','list','','headphones'],
+    ['racing','Гонка','sport','Клетчатый флаг, наклонные цифры и гоночные полосы.','#ffad96','list','','racing'],
+    ['chevrons','Ускорение','sport','Стрелки-шевроны и динамичная ступенчатая композиция.','#c9f88c','list','','chevrons'],
+    ['medals','Медали','sport','Тройка лидеров с медалями и лентами награждения.','#ffdf88','podium','','medal'],
+    ['stadium','Стадион','sport','Овальные дорожки, командные номера и круговой счёт.','#b8f6c6','ring','','stadium'],
+    ['finish-line','Финиш','sport','Лента между флажками и точная шкала результата.','#f4eaa6','list','','finish'],
+    ['leaf','Листва','nature','Тонкие ветви, листовые контуры и лёгкие цифры.','#bee5ad','list','','leaf'],
+    ['bloom','Цветение','nature','Контурные лепестки вокруг аватаров и цветочная цель.','#ffbfdf','ring','','flower'],
+    ['wave','Волна','nature','Плавные морские линии и волнистая шкала прогресса.','#9ee7ff','list','','wave'],
+    ['sunrise','Рассвет','nature','Полукруг солнца, тонкие лучи и тёплая типографика.','#ffdfa3','ring','','sunrise'],
+    ['mountains','Горы','nature','Контурные вершины и треугольные метки высоты.','#c3e4e7','list','','mountains'],
+    ['origami','Оригами','paper','Угловые бумажные сгибы, ромбы и острые штрихи.','#d6d1ff','list','origami','origami'],
+    ['postcard','Открытка','paper','Почтовая перфорация, штемпель и аккуратный счёт.','#ffd6b2','list','postcard','stamp'],
+    ['polaroid','Полароид','paper','Миниатюрные фоторамки аватаров и рукописная подпись.','#fff0d6','list','','photo'],
+    ['ticket','Билет','paper','Прозрачный контур билета с вырезами и отрывной линией.','#c8e6fc','list','ticket','ticket'],
+    ['bookmark','Закладка','paper','Узкая лента-закладка и книжная типографика.','#efbdd7','list','','bookmark']
+  ];
+  styles.push(...additions.map(([id,name,category,description,accent,layout,frame,mark])=>({id,name,category,description,accent,layout,frame,mark})));
   const finite = (value, fallback, min, max) => value !== '' && value !== null && Number.isFinite(Number(value)) ? Math.min(max, Math.max(min, Number(value))) : fallback;
   const defaultConfig = Object.freeze({ type: 'top-likes', style: 'glass', title: '', goal: 10000, limit: 5, accent: '', showAvatars: true, showSecondary: false, compact: true, enabled: true, width: 420 });
 
@@ -51,7 +105,7 @@
       type: type.id,
       style: style.id,
       title: String(raw.title || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 80),
-      goal: Math.round(finite(raw.goal, type.id === 'follow-goal' ? 100 : 10000, 1, 1000000000)),
+      goal: Math.round(finite(raw.goal, type.id === 'follow-goal' ? 3500 : 10000, 1, 1000000000)),
       limit: Math.round(finite(raw.limit, 5, 1, 10)),
       accent: /^#[0-9a-f]{6}$/i.test(raw.accent || '') ? raw.accent.toLowerCase() : '',
       showAvatars: raw.showAvatars !== false,
@@ -65,13 +119,15 @@
   function dimensions(raw) {
     const config = normalizeConfig(raw);
     // Include the host's 20px padding and all rows; empty canvas remains transparent.
+    const style = styles.find(item=>item.id===config.style);
     const titleAllowance = config.title.length > 28 ? 50 : 0;
-    return { width: 460, height: config.type.startsWith('top-') ? Math.max(340, 112 + config.limit * (config.compact ? 46 : 58)) + titleAllowance : config.type.endsWith('-goal') ? 240 + titleAllowance : 280 + titleAllowance };
+    const formAllowance = style.frame ? 85 : style.mark ? 35 : 0;
+    return { width: 460, height: (config.type.startsWith('top-') ? Math.max(340, 112 + config.limit * (config.compact ? 46 : 58)) + titleAllowance : config.type.endsWith('-goal') ? 240 + titleAllowance : 280 + titleAllowance) + formAllowance };
   }
 
   function createDemoState() {
     return {
-      likes: 6840, follows: 68, viewers: 1248,
+      likes: 6840, follows: 68, followers: 3000, viewers: 1248,
       topLikes: [
         { id: 'demo-1', name: 'Александра', avatar: '', value: 2480 },
         { id: 'demo-2', name: 'max.live', avatar: '', value: 1720 },
