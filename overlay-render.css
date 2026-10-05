@@ -1,0 +1,207 @@
+/* Transparent stream graphics: no enclosing panels or row backgrounds. */
+.imm-overlay{--ov-ink:#fff;--ov-muted:#d1d5e2;--ov-row-height:52px;position:relative;container-type:inline-size;box-sizing:border-box;width:100%;max-width:420px;padding:6px 8px;background:transparent;border:0;border-radius:0;box-shadow:none;color:var(--ov-ink);font:14px/1.3 Arial,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;text-align:left;text-shadow:0 1px 2px #000e,0 0 5px #0008}
+.imm-overlay *,.imm-overlay *::before,.imm-overlay *::after{box-sizing:border-box}
+.imm-overlay h2,.imm-overlay p,.imm-overlay ol{margin:0;padding:0}
+.imm-overlay strong,.imm-overlay b{font-weight:700}
+.imm-overlay .ov-icon{display:block;flex:none;width:18px;height:18px;filter:drop-shadow(0 1px 1px #0009)}
+.imm-overlay .ov-heading{position:relative;display:flex;align-items:center;gap:9px;min-width:0;margin:0 0 15px;padding:0;background:transparent;border:0}
+.imm-overlay .ov-heading-icon{display:flex;align-items:center;justify-content:center;flex:none;color:var(--ov-accent);width:20px;height:22px}
+.imm-overlay .ov-heading h2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;min-width:0;color:inherit;font:700 21px/1.22 Arial,"Segoe UI",sans-serif;letter-spacing:-.45px;text-shadow:inherit}
+.imm-overlay .ov-ranking{display:grid;gap:3px;list-style:none}
+.imm-overlay .ov-row{position:relative;display:grid;grid-template-columns:18px 32px minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0;min-height:var(--ov-row-height);padding:4px 0;background:transparent;border:0;box-shadow:none}
+.imm-overlay .ov-rank{display:block;text-align:center;font-size:11px;font-weight:600;color:var(--ov-muted)}
+.imm-overlay .ov-avatar{position:relative;display:grid;place-items:center;flex:none;width:32px;height:32px;overflow:hidden;border-radius:50%;background:#78679d;color:#fff;font-size:13px;font-weight:600;text-shadow:0 1px 2px #0008;box-shadow:0 0 0 1px #fff5,0 1px 3px #0005}
+.imm-overlay .ov-avatar-1{background:#527d88}.imm-overlay .ov-avatar-2{background:#9b7164}.imm-overlay .ov-avatar-3{background:#626d9e}.imm-overlay .ov-avatar-4{background:#62816e}
+.imm-overlay .ov-avatar img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;color:transparent}
+.imm-overlay .ov-name{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:600;line-height:1.4}
+.imm-overlay .ov-score{display:flex;align-items:baseline;justify-content:flex-end;gap:5px;min-width:0;color:var(--ov-ink);white-space:nowrap}
+.imm-overlay .ov-score b{font-size:17px;line-height:1.15;letter-spacing:-.35px;font-weight:700}
+.imm-overlay .ov-score .ov-icon{width:11px;height:11px;align-self:center;color:var(--ov-accent)}
+.imm-overlay .ov-unit{font-size:9px;font-weight:400;color:var(--ov-muted)}
+.imm-overlay .ov-place-1 .ov-rank,.imm-overlay .ov-place-1 .ov-score b{color:var(--ov-accent)}
+.imm-overlay .ov-empty{display:flex;align-items:center;gap:9px;padding:11px 0;color:var(--ov-muted);font-size:13px;min-height:44px}
+.imm-overlay .ov-empty .ov-icon{width:16px;height:16px;opacity:.8}
+.imm-overlay .ov-goal{display:flex;align-items:center;gap:17px;min-width:0}
+.imm-overlay .ov-goal-detail{flex:1;min-width:0}
+.imm-overlay .ov-goal-count{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 9px;margin-bottom:12px;min-width:0}
+.imm-overlay .ov-goal-count>strong{font-size:38px;line-height:1;letter-spacing:-1.8px;overflow-wrap:anywhere}
+.imm-overlay .ov-goal-count>span{color:var(--ov-muted);font-size:17px;white-space:nowrap;font-weight:500}
+.imm-overlay .ov-percent{margin-left:auto;color:var(--ov-accent);font-size:12px;font-weight:600}
+.imm-overlay .ov-track{position:relative;height:6px;overflow:hidden;border-radius:8px;background:#080d1b55;box-shadow:inset 0 0 0 1px #ffffff48,0 1px 2px #0005}
+.imm-overlay .ov-track>span{display:block;width:var(--ov-progress);height:100%;border-radius:inherit;background:var(--ov-accent);transition:width .55s ease;box-shadow:inset 0 1px #ffffff30}
+.imm-overlay .ov-goal-remaining{margin-top:9px;color:var(--ov-muted);font-size:10px}
+.imm-overlay .ov-dial{position:relative;display:none;flex:none;width:80px;height:80px}
+.imm-overlay .ov-dial svg{display:block;width:100%;height:100%;transform:rotate(-90deg);overflow:visible;filter:drop-shadow(0 1px 2px #0007)}
+.imm-overlay .ov-dial circle{fill:none;stroke-width:4}
+.imm-overlay .ov-dial-track{stroke:#ffffff35}.imm-overlay .ov-dial-progress{stroke:var(--ov-accent);stroke-linecap:round}
+.imm-overlay .ov-dial>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:1px;font-size:23px;letter-spacing:-1px;font-weight:700}
+.imm-overlay .ov-dial small{font-size:10px;letter-spacing:0;color:var(--ov-muted)}
+.imm-overlay.ov-layout-ring .ov-dial{display:block}.imm-overlay.ov-layout-ring .ov-track,.imm-overlay.ov-layout-ring .ov-percent{display:none}
+.imm-overlay.ov-layout-ring .ov-goal-count{margin-bottom:0}.imm-overlay.ov-layout-ring .ov-goal-count>strong{font-size:33px}.imm-overlay.ov-layout-ring .ov-goal-count>span{font-size:15px}
+.imm-overlay .ov-gift{display:flex;align-items:center;gap:14px;min-width:0;padding:3px 0}
+.imm-overlay .ov-gift-art{position:relative;display:grid;place-items:center;flex:none;width:64px;height:64px;color:var(--ov-accent)}
+.imm-overlay .ov-gift-art>img{display:block;max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px #0008)}
+.imm-overlay .ov-gift-art>.ov-icon{width:48px;height:48px;stroke-width:1.15;filter:drop-shadow(0 1px 3px #0008)}
+.imm-overlay .ov-gift-info{flex:1;min-width:0}
+.imm-overlay .ov-gift-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-size:20px;line-height:1.2;letter-spacing:-.35px;font-weight:700}
+.imm-overlay .ov-gift-meta{display:flex;align-items:center;gap:9px;margin-top:9px;min-width:0}
+.imm-overlay .ov-gift-value{display:flex;align-items:center;gap:4px;color:var(--ov-accent);flex:none;white-space:nowrap}
+.imm-overlay .ov-gift-value b{font-size:22px;line-height:1.1;letter-spacing:-.7px;font-weight:700}
+.imm-overlay .ov-gift-value>.ov-icon{width:14px;height:14px}.imm-overlay .ov-multiplier{font-size:20px;font-weight:400}
+.imm-overlay .ov-meta-divider{color:var(--ov-muted);font-size:13px}
+.imm-overlay .ov-sender{display:flex;align-items:center;gap:7px;min-width:0}.imm-overlay .ov-sender .ov-avatar{width:22px;height:22px;font-size:10px}
+.imm-overlay .ov-sender strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-size:12px;font-weight:500}
+.imm-overlay .ov-gift-detail{display:block;margin-top:7px;color:var(--ov-muted);font-size:10px;overflow-wrap:anywhere}
+.imm-overlay.ov-compact{--ov-row-height:40px}.imm-overlay.ov-compact .ov-row{grid-template-columns:18px 28px minmax(0,1fr) auto;gap:9px;padding:3px 0}
+.imm-overlay.ov-compact .ov-avatar{width:28px;height:28px;font-size:12px}.imm-overlay.ov-compact .ov-sender .ov-avatar{width:20px;height:20px;font-size:9px}
+.imm-overlay.ov-compact .ov-heading{margin-bottom:12px}.imm-overlay.ov-compact .ov-gift-art{width:56px;height:56px}.imm-overlay.ov-compact .ov-gift-art>.ov-icon{width:43px;height:43px}
+.imm-overlay.ov-no-avatars .ov-row{grid-template-columns:18px minmax(0,1fr) auto}
+
+/* 01 Glass: white hairlines and quiet highlights. */
+.imm-overlay.ov-style-glass .ov-heading{padding-bottom:10px;border-bottom:1px solid #ffffff45}
+.imm-overlay.ov-style-glass .ov-row:not(:last-child){border-bottom:1px solid #ffffff12}.imm-overlay.ov-style-glass .ov-score b{font-weight:500}
+.imm-overlay.ov-style-glass .ov-track>span{background:linear-gradient(90deg,#9cafff,var(--ov-accent),#fff)}
+/* 02 Neon: light stays on the lettering and small rails. */
+.imm-overlay.ov-style-neon .ov-heading h2{letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 12px color-mix(in srgb,var(--ov-accent) 65%,transparent)}
+.imm-overlay.ov-style-neon .ov-heading-icon{filter:drop-shadow(0 0 4px var(--ov-accent))}
+.imm-overlay.ov-style-neon .ov-place-1::before{content:"";position:absolute;top:9px;bottom:9px;left:-6px;width:2px;background:var(--ov-accent);box-shadow:0 0 7px var(--ov-accent)}
+.imm-overlay.ov-style-neon .ov-place-1 .ov-score b{text-shadow:0 1px 2px #000,0 0 9px color-mix(in srgb,var(--ov-accent) 55%,transparent)}
+.imm-overlay.ov-style-neon .ov-track{height:3px;overflow:visible}.imm-overlay.ov-style-neon .ov-track>span{box-shadow:0 0 6px color-mix(in srgb,var(--ov-accent) 65%,transparent)}
+/* 03 Minimal: bare type, with a short underline. */
+.imm-overlay.ov-style-minimal .ov-heading-icon{display:none}.imm-overlay.ov-style-minimal .ov-heading{padding-bottom:11px}
+.imm-overlay.ov-style-minimal .ov-heading::after{content:"";position:absolute;left:0;bottom:0;width:28px;height:1px;background:var(--ov-accent)}
+.imm-overlay.ov-style-minimal .ov-heading h2{font-weight:500;letter-spacing:-.65px}.imm-overlay.ov-style-minimal .ov-rank{opacity:.8;font-weight:400}
+.imm-overlay.ov-style-minimal .ov-name{font-weight:500}.imm-overlay.ov-style-minimal .ov-score .ov-icon{display:none}.imm-overlay.ov-style-minimal .ov-goal-count>strong{font-weight:500}.imm-overlay.ov-style-minimal .ov-track{height:3px}
+/* 04 Podium: three compact columns, with the leader just above the others. */
+.imm-overlay.ov-style-podium .ov-heading{justify-content:center}
+.imm-overlay.ov-style-podium .ov-ranking{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 11px;align-items:end}
+.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3){display:flex;flex-direction:column;gap:5px;min-height:115px;padding:14px 0 5px;text-align:center;justify-content:flex-end}
+.imm-overlay.ov-style-podium .ov-row:nth-child(1){grid-column:2;grid-row:1;min-height:136px;justify-content:flex-start}.imm-overlay.ov-style-podium .ov-row:nth-child(2){grid-column:1;grid-row:1}.imm-overlay.ov-style-podium .ov-row:nth-child(3){grid-column:3;grid-row:1;min-height:110px}
+.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3)::after{content:"";width:34px;height:1px;margin-top:1px;background:var(--ov-accent);opacity:.65}
+.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-rank{order:4;font-size:9px;line-height:1.1;color:var(--ov-accent)}
+.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-name{max-width:100%;font-size:12px;line-height:1.3}
+.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-score{gap:4px}.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-score b{font-size:17px}.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-unit{display:none}
+.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-avatar{width:30px;height:30px;box-shadow:0 0 0 2px #0003,0 0 0 3px color-mix(in srgb,var(--ov-accent) 50%,transparent)}
+.imm-overlay.ov-style-podium .ov-row:nth-child(1) .ov-avatar{width:36px;height:36px;box-shadow:0 0 0 2px #0004,0 0 0 3px var(--ov-accent)}
+.imm-overlay.ov-style-podium .ov-row:nth-child(n+4){grid-column:1/-1}.imm-overlay.ov-style-podium .ov-goal-count{justify-content:center}.imm-overlay.ov-style-podium .ov-percent{margin-left:0}
+.imm-overlay.ov-style-podium .ov-gift{justify-content:center}.imm-overlay.ov-style-podium .ov-gift-info{flex:0 1 auto}
+/* 05 Broadcast: a short stripe and clean ruled lanes. */
+.imm-overlay.ov-style-broadcast .ov-heading{padding-left:12px}
+.imm-overlay.ov-style-broadcast .ov-heading::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:3px;background:var(--ov-accent);box-shadow:0 1px 2px #0006}
+.imm-overlay.ov-style-broadcast .ov-heading-icon{display:none}.imm-overlay.ov-style-broadcast .ov-heading h2{font-weight:800}
+.imm-overlay.ov-style-broadcast .ov-row{border-bottom:1px solid #ffffff26}.imm-overlay.ov-style-broadcast .ov-row:last-child{border:0}.imm-overlay.ov-style-broadcast .ov-avatar{border-radius:4px}
+.imm-overlay.ov-style-broadcast .ov-track{height:7px;border-radius:0}.imm-overlay.ov-style-broadcast .ov-track>span{border-radius:0;background:repeating-linear-gradient(115deg,#ffffff25 0 4px,transparent 4px 9px),var(--ov-accent)}
+/* 06 Editorial: slender serif headlines and italic folio numbers. */
+.imm-overlay.ov-style-editorial .ov-heading{padding-bottom:9px;border-bottom:1px solid var(--ov-accent)}.imm-overlay.ov-style-editorial .ov-heading-icon{display:none}
+.imm-overlay.ov-style-editorial .ov-heading h2{font:400 25px/1.15 Georgia,"Times New Roman",serif;letter-spacing:-.8px}
+.imm-overlay.ov-style-editorial .ov-rank{font:italic 20px/1 Georgia,serif;color:var(--ov-accent)}.imm-overlay.ov-style-editorial .ov-score b{font:400 20px/1 Georgia,serif;letter-spacing:-.2px}
+.imm-overlay.ov-style-editorial .ov-avatar{filter:grayscale(1)}.imm-overlay.ov-style-editorial .ov-goal-count>strong,.imm-overlay.ov-style-editorial .ov-gift-name{font-family:Georgia,serif;font-weight:400}.imm-overlay.ov-style-editorial .ov-track{height:2px;border-radius:0}
+/* 07 Arcade: pixel corners and segmented energy. */
+.imm-overlay.ov-style-arcade{font-family:"Courier New",monospace}.imm-overlay.ov-style-arcade .ov-heading{padding-left:9px}
+.imm-overlay.ov-style-arcade .ov-heading::before{content:"";position:absolute;top:0;bottom:0;left:0;width:4px;border:2px solid var(--ov-accent);border-right:0}
+.imm-overlay.ov-style-arcade .ov-heading h2{font:700 20px/1.2 "Courier New",monospace;letter-spacing:-.9px;text-transform:uppercase}
+.imm-overlay.ov-style-arcade .ov-avatar{border-radius:0;box-shadow:2px 2px 0 #0008,0 0 0 1px var(--ov-accent)}.imm-overlay.ov-style-arcade .ov-rank{font-weight:700;color:var(--ov-accent)}.imm-overlay.ov-style-arcade .ov-score b{letter-spacing:-1px}
+.imm-overlay.ov-style-arcade .ov-track{height:10px;padding:2px;border:1px solid #ffffff65;border-radius:0;box-shadow:0 1px 2px #0008;background:none}.imm-overlay.ov-style-arcade .ov-track>span{border-radius:0;background:repeating-linear-gradient(90deg,var(--ov-accent) 0 7px,transparent 7px 10px)}
+/* 08 Terminal: precise columns and small command markers. */
+.imm-overlay.ov-style-terminal{font-family:"Courier New",monospace}.imm-overlay.ov-style-terminal .ov-heading-icon{display:none}
+.imm-overlay.ov-style-terminal .ov-heading h2{font:400 20px/1.2 "Courier New",monospace;color:var(--ov-accent);letter-spacing:-.8px}.imm-overlay.ov-style-terminal .ov-heading h2::before{content:"> ";font-weight:700}
+.imm-overlay.ov-style-terminal .ov-rank{font-size:10px;color:var(--ov-accent)}.imm-overlay.ov-style-terminal .ov-rank::before{content:"["}.imm-overlay.ov-style-terminal .ov-rank::after{content:"]"}
+.imm-overlay.ov-style-terminal .ov-row{border-bottom:1px dashed #ffffff20}.imm-overlay.ov-style-terminal .ov-row:last-child{border:0}.imm-overlay.ov-style-terminal .ov-name{font-weight:400}.imm-overlay.ov-style-terminal .ov-score b{font-weight:400;color:var(--ov-accent)}
+.imm-overlay.ov-style-terminal .ov-goal-count>strong{font-weight:400;letter-spacing:-2px}.imm-overlay.ov-style-terminal .ov-track{height:6px;background:none;border-radius:0;box-shadow:0 1px 1px #0006}.imm-overlay.ov-style-terminal .ov-track>span{border-radius:0;background:repeating-linear-gradient(90deg,var(--ov-accent) 0 3px,transparent 3px 6px)}
+/* 09 Hologram: bracket details and a slim circular gauge. */
+.imm-overlay.ov-style-hologram .ov-heading{padding:0 9px}.imm-overlay.ov-style-hologram .ov-heading::before,.imm-overlay.ov-style-hologram .ov-heading::after{content:"";position:absolute;width:5px;height:12px;border-color:var(--ov-accent);border-style:solid}
+.imm-overlay.ov-style-hologram .ov-heading::before{left:0;top:0;border-width:1px 0 0 1px}.imm-overlay.ov-style-hologram .ov-heading::after{right:0;bottom:0;border-width:0 1px 1px 0}
+.imm-overlay.ov-style-hologram .ov-heading h2{font-weight:500;letter-spacing:.3px}.imm-overlay.ov-style-hologram .ov-avatar{border-radius:4px;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+.imm-overlay.ov-style-hologram .ov-row::after{content:"";position:absolute;right:0;bottom:0;width:20px;height:1px;background:var(--ov-accent);opacity:.6}.imm-overlay.ov-style-hologram .ov-dial{border:1px dashed #ffffff30;border-radius:50%;padding:3px}
+.imm-overlay.ov-style-hologram .ov-dial circle{stroke-width:2.5}.imm-overlay.ov-style-hologram .ov-dial>span{font-size:21px;font-weight:400}
+/* 10 Gold: centered serif title and restrained double rules. */
+.imm-overlay.ov-style-luxury .ov-heading{justify-content:center;padding-bottom:10px;border-bottom:3px double color-mix(in srgb,var(--ov-accent) 55%,transparent)}
+.imm-overlay.ov-style-luxury .ov-heading h2{font:400 23px/1.18 Georgia,serif;color:#fff0d0;letter-spacing:-.45px}.imm-overlay.ov-style-luxury .ov-heading-icon{width:17px}.imm-overlay.ov-style-luxury .ov-heading-icon .ov-icon{width:16px;height:16px}
+.imm-overlay.ov-style-luxury .ov-rank{font:italic 17px/1 Georgia,serif;color:var(--ov-accent)}.imm-overlay.ov-style-luxury .ov-score b{font:400 20px/1 Georgia,serif;color:var(--ov-accent)}
+.imm-overlay.ov-style-luxury .ov-avatar{box-shadow:0 0 0 1px var(--ov-accent),0 2px 3px #0005}.imm-overlay.ov-style-luxury .ov-goal-count{justify-content:center}.imm-overlay.ov-style-luxury .ov-goal-count>strong{font:400 38px/1 Georgia,serif;color:var(--ov-accent)}
+.imm-overlay.ov-style-luxury .ov-percent{margin-left:0}.imm-overlay.ov-style-luxury .ov-track{height:3px;border-radius:0}.imm-overlay.ov-style-luxury .ov-gift-name{font-family:Georgia,serif;font-weight:400}
+/* 11 Ribbon: angled underline and gently stepped rows. */
+.imm-overlay.ov-style-ribbon .ov-heading{padding-bottom:10px}.imm-overlay.ov-style-ribbon .ov-heading::after{content:"";position:absolute;bottom:0;left:0;width:56px;height:3px;background:var(--ov-accent);clip-path:polygon(0 0,100% 0,90% 100%,0 100%)}
+.imm-overlay.ov-style-ribbon .ov-row:nth-child(2){margin-left:4px}.imm-overlay.ov-style-ribbon .ov-row:nth-child(3){margin-left:8px}.imm-overlay.ov-style-ribbon .ov-row:nth-child(n+4){margin-left:12px}.imm-overlay.ov-style-ribbon .ov-rank{color:var(--ov-accent);font-style:italic}
+.imm-overlay.ov-style-ribbon .ov-track{height:6px;transform:skew(-14deg);border-radius:1px}.imm-overlay.ov-style-ribbon .ov-gift-art{transform:rotate(-5deg)}
+/* 12 Duo: a separate numeric column. */
+.imm-overlay.ov-style-split .ov-heading-icon{order:2;margin-left:auto}.imm-overlay.ov-style-split .ov-score{align-self:stretch;align-items:center;border-left:1px solid #ffffff42;padding-left:12px;min-width:91px}
+.imm-overlay.ov-style-split .ov-heading{border-bottom:1px solid #ffffff28;padding-bottom:9px}.imm-overlay.ov-style-split .ov-goal-count{column-gap:12px}.imm-overlay.ov-style-split .ov-goal-count>strong{padding-right:12px;border-right:1px solid #ffffff65}
+.imm-overlay.ov-style-split .ov-track{height:4px;border-radius:0}.imm-overlay.ov-style-split .ov-gift-art{order:2}.imm-overlay.ov-style-split .ov-gift-info{border-right:1px solid #ffffff40;padding-right:14px}
+/* 13 Capsules: rounded rank outlines and a pill-shaped progress stroke. */
+.imm-overlay.ov-style-capsule .ov-heading-icon{width:26px;height:26px;border:1px solid var(--ov-accent);border-radius:50%}.imm-overlay.ov-style-capsule .ov-heading-icon .ov-icon{width:14px;height:14px}
+.imm-overlay.ov-style-capsule .ov-rank{height:18px;min-width:18px;display:grid;place-items:center;border:1px solid #ffffff5c;border-radius:50%;font-size:9px;color:var(--ov-accent)}
+.imm-overlay.ov-style-capsule .ov-name{font-weight:500;letter-spacing:.15px}.imm-overlay.ov-style-capsule .ov-track{height:9px;border-radius:10px}.imm-overlay.ov-style-capsule .ov-gift-art{border:1px solid #ffffff45;border-radius:50%;padding:5px}.imm-overlay.ov-style-capsule .ov-gift-art>.ov-icon{width:36px;height:36px}
+/* 14 Stickers: letter outlines without a paper surface. */
+.imm-overlay.ov-style-sticker{text-shadow:1px 1px 0 #1b1721,-1px -1px 0 #1b1721,1px -1px 0 #1b1721,-1px 1px 0 #1b1721,2px 3px 0 #1b1721b8}
+.imm-overlay.ov-style-sticker .ov-heading{transform:rotate(-1deg)}.imm-overlay.ov-style-sticker .ov-heading h2{font-size:23px;font-weight:900;letter-spacing:-.65px}
+.imm-overlay.ov-style-sticker .ov-rank{font-weight:900;font-size:14px;transform:rotate(-9deg);color:var(--ov-accent)}.imm-overlay.ov-style-sticker .ov-avatar{box-shadow:0 0 0 2px white,1px 2px 0 3px #1b1721}.imm-overlay.ov-style-sticker .ov-score b{font-size:19px;font-weight:900}
+.imm-overlay.ov-style-sticker .ov-track{height:8px;border:1px solid #fff;border-radius:5px;box-shadow:1px 2px 0 #1b1721}.imm-overlay.ov-style-sticker .ov-gift-art{transform:rotate(-6deg)}
+/* 15 Brutal: condensed type and short right-angle accents. */
+.imm-overlay.ov-style-brutal .ov-heading{padding-left:11px}.imm-overlay.ov-style-brutal .ov-heading::before{content:"";position:absolute;left:0;bottom:0;width:6px;height:15px;border:2px solid var(--ov-accent);border-top:0;border-right:0}
+.imm-overlay.ov-style-brutal .ov-heading h2{font:700 23px/1.08 Impact,"Arial Narrow",Arial,sans-serif;letter-spacing:.15px;text-transform:uppercase}.imm-overlay.ov-style-brutal .ov-heading-icon{display:none}
+.imm-overlay.ov-style-brutal .ov-rank{font-size:19px;font-weight:900;letter-spacing:-1px;color:var(--ov-accent)}.imm-overlay.ov-style-brutal .ov-avatar{border-radius:0}.imm-overlay.ov-style-brutal .ov-name{font-weight:700}.imm-overlay.ov-style-brutal .ov-score b{font:700 22px/1 Impact,"Arial Narrow",Arial,sans-serif;letter-spacing:.2px}
+.imm-overlay.ov-style-brutal .ov-goal-count>strong{font-family:Impact,"Arial Narrow",Arial,sans-serif;letter-spacing:.5px}.imm-overlay.ov-style-brutal .ov-track{height:9px;border-radius:0;box-shadow:0 0 0 1px #ffffff70,2px 2px 0 #0008}
+/* 16 Handwritten: freehand text and fine dashed rules. */
+.imm-overlay.ov-style-paper .ov-heading h2{font:700 22px/1.22 "Segoe Print","Comic Sans MS",cursive;letter-spacing:-.65px}.imm-overlay.ov-style-paper .ov-heading-icon{transform:rotate(-12deg)}
+.imm-overlay.ov-style-paper .ov-row{border-bottom:1px dashed #ffffff36}.imm-overlay.ov-style-paper .ov-row:last-child{border:0}.imm-overlay.ov-style-paper .ov-rank{font:400 15px/1 "Segoe Print","Comic Sans MS",cursive;color:var(--ov-accent)}
+.imm-overlay.ov-style-paper .ov-avatar{border-radius:3px;transform:rotate(-4deg);box-shadow:0 0 0 1px #fff,1px 2px 2px #0007}.imm-overlay.ov-style-paper .ov-track{height:5px;transform:rotate(-.4deg);border-radius:2px}.imm-overlay.ov-style-paper .ov-track>span{background:repeating-linear-gradient(110deg,var(--ov-accent) 0 3px,#ffffff85 3px 4px)}
+.imm-overlay.ov-style-paper .ov-gift-name{font-family:"Segoe Print","Comic Sans MS",cursive;font-size:18px}
+/* 17 Orbit: small orbital rings around the actual content. */
+.imm-overlay.ov-style-orbit .ov-heading-icon{border:1px solid #ffffff4a;border-radius:50%;width:27px;height:27px}.imm-overlay.ov-style-orbit .ov-heading-icon .ov-icon{width:15px;height:15px}
+.imm-overlay.ov-style-orbit .ov-avatar{box-shadow:0 0 0 2px #0002,0 0 0 3px #c6aaff65,0 0 0 5px #c6aaff14}.imm-overlay.ov-style-orbit .ov-place-1 .ov-score b{text-shadow:0 1px 2px #000,0 0 8px #c6aaff70}
+.imm-overlay.ov-style-orbit .ov-dial{width:84px;height:84px;border:1px solid #ffffff23;border-radius:50%;padding:4px}.imm-overlay.ov-style-orbit .ov-dial-progress{filter:drop-shadow(0 0 3px #c6aaff80)}
+.imm-overlay.ov-style-orbit .ov-gift-art{border:1px solid #c6aaff55;border-radius:50%;padding:6px}.imm-overlay.ov-style-orbit .ov-gift-art::after{content:"";position:absolute;top:3px;right:6px;width:3px;height:3px;border-radius:50%;background:var(--ov-accent);box-shadow:0 0 5px var(--ov-accent)}
+/* 18 Retro: warm serifs with three short sunset lines. */
+.imm-overlay.ov-style-retro{--ov-ink:#fff1dc;--ov-muted:#e8d6c0}.imm-overlay.ov-style-retro .ov-heading{padding-bottom:14px}
+.imm-overlay.ov-style-retro .ov-heading::after{content:"";position:absolute;left:0;bottom:5px;width:42px;height:2px;background:#f28d79;box-shadow:0 3px 0 #f4c77a,0 6px 0 #97b99d}
+.imm-overlay.ov-style-retro .ov-heading h2{font:700 24px/1.12 Georgia,serif;letter-spacing:-.9px}.imm-overlay.ov-style-retro .ov-heading-icon{display:none}.imm-overlay.ov-style-retro .ov-rank{font:700 16px/1 Georgia,serif;color:var(--ov-accent)}
+.imm-overlay.ov-style-retro .ov-score b{font-family:Georgia,serif;font-size:20px}.imm-overlay.ov-style-retro .ov-avatar{box-shadow:0 0 0 2px #fff1dc80,0 1px 3px #0009}
+.imm-overlay.ov-style-retro .ov-track{height:8px}.imm-overlay.ov-style-retro .ov-track>span{background:linear-gradient(#f28d79 0 33%,#f4c77a 33% 66%,#97b99d 66%)}.imm-overlay.ov-style-retro .ov-goal-count>strong,.imm-overlay.ov-style-retro .ov-gift-name{font-family:Georgia,serif}
+/* 19 Scoreboard: aligned numbers and a clean table rule. */
+.imm-overlay.ov-style-scoreboard .ov-heading{padding-bottom:9px;border-bottom:2px solid var(--ov-accent)}.imm-overlay.ov-style-scoreboard .ov-heading h2{font-size:20px;letter-spacing:.3px;text-transform:uppercase;font-weight:800}
+.imm-overlay.ov-style-scoreboard .ov-row:not(:last-child){border-bottom:1px solid #ffffff24}.imm-overlay.ov-style-scoreboard .ov-rank{font:bold 15px/1 "Courier New",monospace;color:var(--ov-muted)}.imm-overlay.ov-style-scoreboard .ov-avatar{border-radius:4px}
+.imm-overlay.ov-style-scoreboard .ov-score{min-width:92px;border-left:1px solid #ffffff3d;padding-left:12px}.imm-overlay.ov-style-scoreboard .ov-score b{font:bold 20px/1 "Courier New",monospace;letter-spacing:-1px}
+.imm-overlay.ov-style-scoreboard .ov-goal-count>strong,.imm-overlay.ov-style-scoreboard .ov-gift-value b{font-family:"Courier New",monospace}.imm-overlay.ov-style-scoreboard .ov-track{height:8px;border-radius:0}
+/* 20 Blueprint: measurement details, without a drafting surface. */
+.imm-overlay.ov-style-blueprint{font-family:"Courier New",monospace}.imm-overlay.ov-style-blueprint .ov-heading{padding:0 10px 10px;border-bottom:1px solid #a0d9ff6b}
+.imm-overlay.ov-style-blueprint .ov-heading::before,.imm-overlay.ov-style-blueprint .ov-heading::after{content:"+";position:absolute;bottom:-7px;color:var(--ov-accent);font:12px/1 "Courier New",monospace}
+.imm-overlay.ov-style-blueprint .ov-heading::before{left:-2px}.imm-overlay.ov-style-blueprint .ov-heading::after{right:-2px}.imm-overlay.ov-style-blueprint .ov-heading h2{font:400 20px/1.2 "Courier New",monospace;letter-spacing:-.8px}
+.imm-overlay.ov-style-blueprint .ov-heading-icon{display:none}.imm-overlay.ov-style-blueprint .ov-rank{color:var(--ov-accent);font-weight:400}.imm-overlay.ov-style-blueprint .ov-avatar{border-radius:0;box-shadow:0 0 0 1px #a0d9ff80;filter:grayscale(.7)}.imm-overlay.ov-style-blueprint .ov-score b{font-weight:400}
+.imm-overlay.ov-style-blueprint .ov-track{height:10px;border-radius:0;background:repeating-linear-gradient(90deg,transparent 0 9%,#ffffff70 9% 10%);box-shadow:0 0 0 1px #ffffff60,0 1px 2px #0008}.imm-overlay.ov-style-blueprint .ov-track>span{border-radius:0;background:repeating-linear-gradient(130deg,var(--ov-accent) 0 1px,#a0d9ff4a 1px 4px)}
+/* 21 Flame: italic figures and a small warm underline. */
+.imm-overlay.ov-style-flame .ov-heading{padding-bottom:9px}.imm-overlay.ov-style-flame .ov-heading::after{content:"";position:absolute;left:0;bottom:0;width:67px;height:2px;background:linear-gradient(90deg,#ff644e,var(--ov-accent),transparent)}
+.imm-overlay.ov-style-flame .ov-heading h2{font-size:22px;font-weight:800;font-style:italic}.imm-overlay.ov-style-flame .ov-heading-icon{transform:skew(-10deg)}.imm-overlay.ov-style-flame .ov-avatar{border-radius:7px 1px 7px 1px}
+.imm-overlay.ov-style-flame .ov-rank{font-size:15px;font-style:italic;font-weight:800;color:var(--ov-accent)}.imm-overlay.ov-style-flame .ov-score b{font-size:19px;font-style:italic}.imm-overlay.ov-style-flame .ov-place-1 .ov-score b{text-shadow:0 1px 2px #000,0 0 8px #ff773573}
+.imm-overlay.ov-style-flame .ov-track{height:6px;border-radius:0;transform:skew(-16deg)}.imm-overlay.ov-style-flame .ov-track>span{border-radius:0;background:linear-gradient(90deg,#ff6b5c,var(--ov-accent))}.imm-overlay.ov-style-flame .ov-gift-value{font-style:italic}
+/* 22 Frost: light type and a small icy glint. */
+.imm-overlay.ov-style-frost .ov-heading h2{font-size:22px;font-weight:400;letter-spacing:.15px}.imm-overlay.ov-style-frost .ov-heading-icon{transform:rotate(45deg);border:1px solid #ffffff65;width:21px;height:21px;margin-right:4px}
+.imm-overlay.ov-style-frost .ov-heading-icon .ov-icon{transform:rotate(-45deg);width:14px;height:14px}.imm-overlay.ov-style-frost .ov-avatar{border-radius:5px 1px 5px 1px;box-shadow:0 0 0 1px #ffffffb0,0 1px 4px #0006}
+.imm-overlay.ov-style-frost .ov-score b{font-weight:400;letter-spacing:.1px}.imm-overlay.ov-style-frost .ov-name{font-weight:500}.imm-overlay.ov-style-frost .ov-row:not(:last-child){border-bottom:1px solid #c2f2ff20}
+.imm-overlay.ov-style-frost .ov-track{height:3px}.imm-overlay.ov-style-frost .ov-track>span{background:linear-gradient(90deg,#bceeff80,#fff,var(--ov-accent))}.imm-overlay.ov-style-frost .ov-gift-art{filter:drop-shadow(0 0 3px #a5eaff5c)}
+/* 23 Cloud: rounded lettering, little bubble marks and a round gauge. */
+.imm-overlay.ov-style-bubble{font-family:"Trebuchet MS","Segoe UI",Arial,sans-serif}.imm-overlay.ov-style-bubble .ov-heading h2{font:700 22px/1.2 "Trebuchet MS","Segoe UI",Arial,sans-serif;letter-spacing:-.65px}.imm-overlay.ov-style-bubble .ov-heading-icon{transform:rotate(-8deg)}
+.imm-overlay.ov-style-bubble .ov-rank{display:grid;place-items:center;height:19px;width:19px;border:1px solid #e0bdff88;border-radius:50%;font-size:10px;color:var(--ov-accent)}
+.imm-overlay.ov-style-bubble .ov-avatar{box-shadow:0 0 0 2px #e0bdff80,0 1px 4px #0006}.imm-overlay.ov-style-bubble .ov-place-2 .ov-avatar{box-shadow:0 0 0 2px #b2e2ff80,0 1px 4px #0006}.imm-overlay.ov-style-bubble .ov-place-3 .ov-avatar{box-shadow:0 0 0 2px #ffcae280,0 1px 4px #0006}
+.imm-overlay.ov-style-bubble .ov-dial circle{stroke-width:7}.imm-overlay.ov-style-bubble .ov-dial>span{color:var(--ov-accent)}.imm-overlay.ov-style-bubble .ov-gift-art{border:1px solid #e0bdff5c;border-radius:45% 55% 55% 45%;padding:5px}
+/* 24 Mixtape: tape-label rules and a miniature equalizer. */
+.imm-overlay.ov-style-cassette .ov-heading{padding:5px 0 9px;border-top:1px solid #ffffff55;border-bottom:2px solid var(--ov-accent)}.imm-overlay.ov-style-cassette .ov-heading h2{font:700 21px/1.16 "Courier New",monospace;letter-spacing:-.8px}
+.imm-overlay.ov-style-cassette .ov-heading-icon{border:1px solid #ffffff6b;border-radius:50%;height:21px;width:21px}.imm-overlay.ov-style-cassette .ov-heading-icon .ov-icon{width:12px;height:12px}.imm-overlay.ov-style-cassette .ov-rank{font-family:"Courier New",monospace;font-size:12px;color:var(--ov-accent)}
+.imm-overlay.ov-style-cassette .ov-avatar{box-shadow:0 0 0 2px #0006,0 0 0 3px #ffffff60}.imm-overlay.ov-style-cassette .ov-score b{font:700 19px/1 "Courier New",monospace;letter-spacing:-.8px}
+.imm-overlay.ov-style-cassette .ov-track{height:10px;border-radius:0;padding:2px;background:none;box-shadow:0 1px 0 #ffffff65,0 -1px 0 #ffffff35}.imm-overlay.ov-style-cassette .ov-track>span{border-radius:0;background:repeating-linear-gradient(90deg,var(--ov-accent) 0 3px,transparent 3px 6px)}
+
+/* Narrow sources retain the graphics, rather than a scaled card. */
+@container (max-width:310px){
+ .imm-overlay .ov-heading{gap:7px}.imm-overlay .ov-heading h2{font-size:18px;letter-spacing:-.4px}.imm-overlay .ov-heading-icon{width:17px;height:20px}.imm-overlay .ov-heading-icon .ov-icon{width:16px;height:16px}
+ .imm-overlay .ov-row,.imm-overlay.ov-compact .ov-row{grid-template-columns:15px 25px minmax(0,1fr) auto;gap:7px}.imm-overlay .ov-avatar,.imm-overlay.ov-compact .ov-avatar{width:25px;height:25px;font-size:11px}.imm-overlay .ov-name{font-size:12px}.imm-overlay .ov-score b{font-size:15px}.imm-overlay .ov-score .ov-icon{width:9px;height:9px}.imm-overlay .ov-unit{font-size:8px}.imm-overlay.ov-no-avatars .ov-row{grid-template-columns:15px minmax(0,1fr) auto}
+ .imm-overlay .ov-goal-count>strong{font-size:31px}.imm-overlay .ov-goal-count>span{font-size:14px}.imm-overlay .ov-percent{font-size:10px}.imm-overlay .ov-goal{gap:12px}.imm-overlay .ov-dial{width:68px;height:68px}.imm-overlay .ov-dial>span{font-size:20px}.imm-overlay.ov-layout-ring .ov-goal-count>strong{font-size:28px}.imm-overlay.ov-layout-ring .ov-goal-count>span{font-size:12px}
+ .imm-overlay .ov-gift{gap:11px}.imm-overlay .ov-gift-art,.imm-overlay.ov-compact .ov-gift-art{width:46px;height:46px}.imm-overlay .ov-gift-art>.ov-icon,.imm-overlay.ov-compact .ov-gift-art>.ov-icon{width:36px;height:36px}.imm-overlay .ov-gift-name{font-size:17px}.imm-overlay .ov-gift-meta{gap:6px}.imm-overlay .ov-gift-value b{font-size:19px}.imm-overlay .ov-gift-value>.ov-icon{width:12px;height:12px}.imm-overlay .ov-sender{gap:5px}.imm-overlay .ov-sender strong{font-size:10px}.imm-overlay .ov-sender .ov-avatar,.imm-overlay.ov-compact .ov-sender .ov-avatar{width:18px;height:18px;font-size:8px}
+ .imm-overlay.ov-style-podium .ov-ranking{column-gap:8px}.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-name{font-size:10px}.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-score b{font-size:14px}.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-avatar{width:26px;height:26px}.imm-overlay.ov-style-podium .ov-row:nth-child(1) .ov-avatar{width:32px;height:32px}
+ .imm-overlay.ov-style-split .ov-score,.imm-overlay.ov-style-scoreboard .ov-score{min-width:72px;padding-left:8px}.imm-overlay.ov-style-scoreboard .ov-score b,.imm-overlay.ov-style-cassette .ov-score b{font-size:17px}.imm-overlay.ov-style-editorial .ov-score b,.imm-overlay.ov-style-luxury .ov-score b,.imm-overlay.ov-style-retro .ov-score b{font-size:18px}.imm-overlay.ov-style-orbit .ov-dial{width:74px;height:74px}.imm-overlay.ov-style-paper .ov-heading h2{font-size:18px}.imm-overlay.ov-style-editorial .ov-heading h2,.imm-overlay.ov-style-luxury .ov-heading h2,.imm-overlay.ov-style-retro .ov-heading h2{font-size:21px}.imm-overlay.ov-style-brutal .ov-heading h2{font-size:21px}.imm-overlay.ov-style-brutal .ov-score b{font-size:20px}
+}
+@container (max-width:240px){
+ .imm-overlay .ov-row,.imm-overlay.ov-compact .ov-row{grid-template-columns:13px 23px minmax(0,1fr) auto;gap:6px}.imm-overlay .ov-name{font-size:11px}.imm-overlay .ov-score{gap:3px}.imm-overlay .ov-score b{font-size:14px}.imm-overlay .ov-score .ov-icon{width:8px;height:8px}.imm-overlay .ov-unit{display:none}.imm-overlay .ov-avatar,.imm-overlay.ov-compact .ov-avatar{width:23px;height:23px}.imm-overlay.ov-no-avatars .ov-row{grid-template-columns:13px minmax(0,1fr) auto}
+ .imm-overlay .ov-goal-count{column-gap:6px}.imm-overlay .ov-goal-count>strong{font-size:28px}.imm-overlay .ov-goal-count>span{font-size:12px}.imm-overlay .ov-percent{font-size:9px}.imm-overlay .ov-gift-name{font-size:16px}.imm-overlay .ov-gift-value b{font-size:17px}.imm-overlay .ov-meta-divider{display:none}.imm-overlay .ov-gift-meta{gap:8px}.imm-overlay .ov-sender .ov-avatar{display:none}
+ .imm-overlay.ov-style-split .ov-score,.imm-overlay.ov-style-scoreboard .ov-score{min-width:61px;padding-left:7px}.imm-overlay.ov-style-scoreboard .ov-score b,.imm-overlay.ov-style-cassette .ov-score b{font-size:15px}.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-score b{font-size:12px}.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-score .ov-icon{display:none}.imm-overlay.ov-style-podium .ov-row:nth-child(-n+3) .ov-name{font-size:9px}.imm-overlay.ov-style-paper .ov-gift-name{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){.imm-overlay .ov-track>span{transition:none}}

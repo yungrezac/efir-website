@@ -24,7 +24,7 @@ const publicFiles = new Set([
   '/sinabon', '/sinabon/', '/sinabon.html', '/creator.css', '/creator.js',
   '/astral', '/astral/', '/astral.html', '/darisha', '/darisha/', '/darisha.html',
   '/violla', '/violla/', '/violla.html', '/violla.css', '/landing-page.css', '/landing-public.js', '/landing-layout.js'
-  ,'/widget.html','/widget-render.js','/widget-public.js','/landing-icons.css','/landing-icons.js'
+  ,'/widget.html','/widget-render.js','/widget-public.js','/overlay-model.js','/overlay-render.js','/overlay-render.css','/landing-icons.css','/landing-icons.js'
 ]);
 for (const route of seo.pageFiles.keys()) publicFiles.add(route);
 if (seo.keyPath) publicFiles.add(seo.keyPath);
